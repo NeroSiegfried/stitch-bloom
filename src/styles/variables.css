@@ -1,0 +1,67 @@
+/* ============================================================
+   STITCH BLOOM — Design Tokens
+   ============================================================ */
+
+:root {
+  /* ── Colour Palette ── */
+  --color-cream:        #F7F2EA;
+  --color-cream-dark:   #EDE5D8;
+  --color-terracotta:   #C4714A;
+  --color-terracotta-light: #D4896A;
+  --color-brown-deep:   #2C1A0E;
+  --color-brown-mid:    #5C3D2A;
+  --color-brown-light:  #8B6550;
+  --color-rose-dust:    #C9A89A;
+  --color-sage:         #7D8C72;
+  --color-white:        #FFFFFF;
+  --color-off-white:    #FAF8F5;
+  --color-text-primary: #2C1A0E;
+  --color-text-muted:   #7A6559;
+  --color-border:       #DDD3C7;
+
+  /* ── Typography ── */
+  --font-heading: 'Cormorant Garamond', 'Georgia', serif;
+  --font-body:    'Inter', 'Helvetica Neue', Arial, sans-serif;
+
+  --size-xs:   0.75rem;   /* 12px */
+  --size-sm:   0.875rem;  /* 14px */
+  --size-base: 1rem;      /* 16px */
+  --size-md:   1.125rem;  /* 18px */
+  --size-lg:   1.375rem;  /* 22px */
+  --size-xl:   1.75rem;   /* 28px */
+  --size-2xl:  2.25rem;   /* 36px */
+  --size-3xl:  3rem;      /* 48px */
+  --size-4xl:  4rem;      /* 64px */
+  --size-5xl:  5.5rem;    /* 88px */
+
+  /* ── Spacing ── */
+  --space-xs:  0.5rem;
+  --space-sm:  1rem;
+  --space-md:  1.5rem;
+  --space-lg:  2.5rem;
+  --space-xl:  4rem;
+  --space-2xl: 6rem;
+  --space-3xl: 9rem;
+
+  /* ── Layout ── */
+  --max-width:      1280px;
+  --container-pad:  clamp(1.5rem, 5vw, 5rem);
+  --nav-height:     72px;
+
+  /* ── Motion ── */
+  --transition-fast:   150ms ease;
+  --transition-base:   280ms ease;
+  --transition-slow:   500ms ease;
+
+  /* ── Shadows ── */
+  --shadow-sm:  0 1px 4px rgba(44, 26, 14, 0.08);
+  --shadow-md:  0 4px 16px rgba(44, 26, 14, 0.10);
+  --shadow-lg:  0 12px 40px rgba(44, 26, 14, 0.14);
+
+  /* ── Border Radius ── */
+  --radius-sm:  4px;
+  --radius-md:  8px;
+  --radius-lg:  16px;
+  --radius-xl:  24px;
+  --radius-full: 9999px;
+}

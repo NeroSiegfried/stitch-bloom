@@ -1,0 +1,134 @@
+/* ============================================================
+   ProductCard — grid card for listing pages
+   M&S style: sharp corners, minimal, hover overlay
+   ============================================================ */
+
+.product-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  cursor: pointer;
+}
+
+/* ── Image container ── */
+.product-card__image-wrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  border-radius: 0;              /* square, M&S style */
+  background-color: var(--color-cream-dark);
+}
+
+.product-card__image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.55s ease;
+}
+
+.product-card__image-wrap:hover .product-card__image {
+  transform: scale(1.04);
+}
+
+/* Hover overlay */
+.product-card__overlay {
+  position: absolute;
+  inset: 0;
+  background-color: rgba(44, 26, 14, 0.32);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity var(--transition-base);
+}
+
+.product-card__image-wrap:hover .product-card__overlay {
+  opacity: 1;
+}
+
+.product-card__overlay-label {
+  font-size: var(--size-xs);
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-white);
+  border: 1px solid rgba(255,255,255,0.75);
+  padding: 10px 22px;
+  background-color: transparent;
+  transition: background-color var(--transition-fast), color var(--transition-fast);
+}
+
+.product-card__overlay-label:hover {
+  background-color: var(--color-white);
+  color: var(--color-brown-deep);
+}
+
+.product-card__placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--size-sm);
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+.product-card__badge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  font-size: var(--size-xs);
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  background-color: var(--color-terracotta);
+  color: var(--color-white);
+  padding: 4px 10px;
+  border-radius: 0;
+}
+
+/* ── Info ── */
+.product-card__info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.product-card__collection {
+  font-size: var(--size-xs);
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.product-card__name {
+  font-family: var(--font-heading);
+  font-size: var(--size-lg);
+  font-weight: 400;
+  color: var(--color-brown-deep);
+  line-height: 1.2;
+}
+
+.product-card__price {
+  font-size: var(--size-sm);
+  font-weight: 400;
+  color: var(--color-brown-deep);
+}
+
+.product-card__meta {
+  font-size: var(--size-xs);
+  color: var(--color-text-muted);
+}
+
+.product-card__customizable {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--size-xs);
+  color: var(--color-sage);
+  font-weight: 400;
+  letter-spacing: 0.04em;
+}

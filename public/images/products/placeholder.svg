@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="1000" viewBox="0 0 800 1000">
+  <rect width="800" height="1000" fill="#E8E2DA"/>
+  <rect x="2" y="2" width="796" height="996" fill="none" stroke="#2C1A0E" stroke-width="1" stroke-dasharray="5 4" opacity="0.25"/>
+  <text x="400" y="455" font-family="Georgia, serif" font-size="14" fill="#2C1A0E" opacity="0.35" text-anchor="middle" letter-spacing="3" text-transform="uppercase">IMAGE COMING SOON</text>
+  <text x="400" y="485" font-family="Georgia, serif" font-size="11" fill="#2C1A0E" opacity="0.25" text-anchor="middle" letter-spacing="2">The Stitch Bloom</text>
+  <line x1="340" y1="505" x2="460" y2="505" stroke="#2C1A0E" stroke-width="0.75" opacity="0.2"/>
+</svg>
