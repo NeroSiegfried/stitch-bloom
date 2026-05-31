@@ -73,11 +73,11 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .section {
-  padding-block: var(--space-2xl);
+  padding-block: var(--space-section);
 }
 
 .section--compact {
-  padding-block: var(--space-xl);
+  padding-block: var(--space-section-tight);
 }
 
 /* ── Utility ── */
@@ -98,4 +98,18 @@ h1, h2, h3, h4, h5, h6 {
 @keyframes pageFadeIn {
   from { opacity: 0; transform: translateY(12px); }
   to   { opacity: 1; transform: translateY(0); }
+}
+
+@font-face {
+  font-family: 'Silver South Script';
+  src: url('/images/silver-south-script/silver-south-script.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Boiling Bold';
+  src: url('/images/Boiling%20Bold/Boiling%20Bold.ttf') format('truetype');
+  font-weight: bold;
+  font-style: normal;
 }

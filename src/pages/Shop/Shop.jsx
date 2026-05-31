@@ -1,5 +1,8 @@
 import { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, Link } from 'react-router-dom';
+import { FiShoppingBag } from 'react-icons/fi';
+import { SITE_CONFIG } from '../../data/siteConfig';
+import { useCart } from '../../context/CartContext';
 import { collections, getAllProducts, formatPrice } from '../../data/products';
 import useReveal from '../../hooks/useReveal';
 import '../../styles/buttons.css';
@@ -7,18 +10,23 @@ import './Shop.css';
 
 const ALL_FILTER = 'all';
 
-/* ─── Arrow SVG ─────────────────────────────── */
-function ArrowIcon({ dir = 'right' }) {
+/* ─── Top-right diagonal arrow (M&S style) ─── */
+function ArrowIcon() {
   return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none"
+      stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"
+      aria-hidden="true">
+      <line x1="2" y1="12" x2="12" y2="2" />
+      <polyline points="4,2 12,2 12,10" />
+    </svg>
+  );
+}
+
+/* ─── Left/Right arrow for carousel nav ─────── */
+function NavArrow({ dir = 'right' }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       {dir === 'right' ? (
         <path d="M5 12h14M13 5l7 7-7 7" />
       ) : (
@@ -33,6 +41,8 @@ function FeaturedCarousel({ products }) {
   const [current, setCurrent] = useState(0);
   const [leaving, setLeaving] = useState(false);
   const [dir, setDir]         = useState('next');
+  const [activeVariant, setActiveVariant] = useState(0);
+  const { addItem } = useCart();
   const total = products.length;
 
   const go = (direction) => {
@@ -45,15 +55,20 @@ function FeaturedCarousel({ products }) {
           ? (prev + 1) % total
           : (prev - 1 + total) % total
       );
+      setActiveVariant(0);
       setLeaving(false);
     }, 380);
   };
 
   const product = products[current];
-  const heroImage =
-    product.colorVariants?.length > 0
-      ? product.colorVariants[0].images[0]
-      : product.images[0];
+  const hasVariants = product.colorVariants?.length > 0;
+  const activeVariantData = hasVariants ? (product.colorVariants[activeVariant] ?? product.colorVariants[0]) : null;
+  const heroImage = hasVariants
+    ? (activeVariantData.images?.[0] ?? product.images?.[0])
+    : product.images?.[0];
+  const heroFocalPoint = hasVariants
+    ? (activeVariantData.imageFocalPoints?.[0] ?? 'center')
+    : (product.imageFocalPoints?.[0] ?? 'center');
 
   const pad = (n) => String(n + 1).padStart(2, '0');
 
@@ -63,19 +78,39 @@ function FeaturedCarousel({ products }) {
 
         {/* Image block — 58% width on desktop */}
         <div className="fc__image-block">
-          <div className="fc__image-wrap">
-            <img
-              key={heroImage}
-              src={heroImage}
-              alt={product.name}
-              className="fc__image"
-              onError={(e) => { e.target.src = '/images/products/placeholder.svg'; }}
-            />
-          </div>
+          <Link to={`/shop/${product.id}`} className="fc__image-link" aria-label={`View ${product.name}`}>
+            <div className="fc__image-wrap">
+              <img
+                key={heroImage}
+                src={heroImage}
+                alt={product.name}
+                className="fc__image"
+                style={{ objectPosition: heroFocalPoint }}
+                onError={(e) => { e.target.src = '/images/products/placeholder.svg'; }}
+              />
+            </div>
+          </Link>
           {product.badge && (
             <span className="fc__badge">{product.badge}</span>
           )}
           <span className="fc__bg-index" aria-hidden="true">{pad(current)}</span>
+
+          {/* Nav arrows overlaid on image — bottom-left corner */}
+          <div className="fc__image-nav">
+            <button className="fc__arrow fc__arrow--prev" onClick={() => go('prev')} aria-label="Previous product">
+              <span className="fc__arrow-icon fc__arrow-icon--1"><NavArrow dir="left" /></span>
+              <span className="fc__arrow-icon fc__arrow-icon--2"><NavArrow dir="left" /></span>
+            </button>
+            <span className="fc__counter" aria-live="polite" aria-atomic="true">
+              <strong>{pad(current)}</strong>
+              <span className="fc__counter-slash" aria-hidden="true"> / </span>
+              <span className="fc__counter-total">{pad(total - 1)}</span>
+            </span>
+            <button className="fc__arrow fc__arrow--next" onClick={() => go('next')} aria-label="Next product">
+              <span className="fc__arrow-icon fc__arrow-icon--1"><NavArrow dir="right" /></span>
+              <span className="fc__arrow-icon fc__arrow-icon--2"><NavArrow dir="right" /></span>
+            </button>
+          </div>
         </div>
 
         {/* Info panel */}
@@ -85,7 +120,7 @@ function FeaturedCarousel({ products }) {
           <p className="fc__price">{formatPrice(product.currency, product.price)}</p>
           <p className="fc__desc">{product.description}</p>
 
-          {product.colors?.length > 0 && (
+          {product.colors?.length > 0 && !hasVariants && (
             <p className="fc__colors">
               <span className="fc__colors-label">Available in ·</span>{' '}
               {product.colors.join(', ')}
@@ -99,71 +134,84 @@ function FeaturedCarousel({ products }) {
           )}
 
           <div className="fc__actions">
+            <button
+              className="btn-split"
+              onClick={() => addItem(product)}
+            >
+              <span className="btn-split__label">Add to Bag</span>
+              <span className="btn-split__icon"><FiShoppingBag size={14} /></span>
+            </button>
             <a
               href={`mailto:thestitchbloom@yahoo.com?subject=Order enquiry: ${encodeURIComponent(product.name)}`}
-              className="btn btn--primary"
+              className="btn-split"
             >
-              Order via Email
+              <span className="btn-split__label">Order via Email</span>
+              <span className="btn-split__icon">
+                <span className="btn-split__arrow btn-split__arrow--1"><ArrowIcon /></span>
+                <span className="btn-split__arrow btn-split__arrow--2"><ArrowIcon /></span>
+              </span>
             </a>
             <a
-              href="https://instagram.com/thestitchbloomco"
+              href={SITE_CONFIG.instagram.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="btn btn--ghost"
+              className="btn-split"
             >
-              DM on Instagram
+              <span className="btn-split__label">DM on Instagram</span>
+              <span className="btn-split__icon">
+                <span className="btn-split__arrow btn-split__arrow--1"><ArrowIcon /></span>
+                <span className="btn-split__arrow btn-split__arrow--2"><ArrowIcon /></span>
+              </span>
             </a>
           </div>
 
-          {product.colorVariants?.length > 1 && (
+          {hasVariants && (
             <div className="fc__variants">
-              {product.colorVariants.map((v) => (
-                <div key={v.label} className="fc__variant-thumb-wrap">
-                  <img
-                    src={v.images[0]}
-                    alt={v.label}
-                    className="fc__variant-thumb"
-                    onError={(e) => { e.target.src = '/images/products/placeholder.svg'; }}
-                  />
-                  <span className="fc__variant-label">{v.label}</span>
-                </div>
-              ))}
+              <p className="fc__variants-label">Colourway</p>
+              <div className="fc__variant-list">
+                {product.colorVariants.map((v, j) => (
+                  <button
+                    key={v.label}
+                    className={`fc__variant-btn${j === activeVariant ? ' fc__variant-btn--active' : ''}`}
+                    onClick={() => setActiveVariant(j)}
+                    aria-pressed={j === activeVariant}
+                  >
+                    <img
+                      src={v.images[0]}
+                      alt={v.label}
+                      className="fc__variant-thumb"
+                      onError={(e) => { e.target.src = '/images/products/placeholder.svg'; }}
+                    />
+                    <span className="fc__variant-label">{v.label}</span>
+                  </button>
+                ))}
+              </div>
             </div>
           )}
         </div>
-      </div>
-
-      {/* Nav bar */}
-      <div className="fc__nav">
-        <button className="fc__arrow" onClick={() => go('prev')} aria-label="Previous product">
-          <ArrowIcon dir="left" />
-        </button>
-        <span className="fc__counter" aria-live="polite" aria-atomic="true">
-          <strong>{pad(current)}</strong>
-          <span className="fc__counter-slash" aria-hidden="true"> / </span>
-          <span className="fc__counter-total">{pad(total - 1)}</span>
-        </span>
-        <button className="fc__arrow" onClick={() => go('next')} aria-label="Next product">
-          <ArrowIcon dir="right" />
-        </button>
       </div>
     </div>
   );
 }
 
+
 /* ─── Grid card ─────────────────────────────── */
 function ShopCard({ product }) {
-  const displayImage =
-    product.colorVariants?.length > 0
-      ? product.colorVariants[0].images[0]
-      : product.images[0];
+  const { addItem } = useCart();
+  const hasVariants = product.colorVariants?.length > 0;
+  const displayImage = hasVariants
+    ? product.colorVariants[0].images[0]
+    : product.images[0];
+  const focalPoint = hasVariants
+    ? (product.colorVariants[0].imageFocalPoints?.[0] ?? 'center')
+    : (product.imageFocalPoints?.[0] ?? 'center');
 
   return (
-    <article className="sc reveal" id={product.id}>
-      <a
-        href={`mailto:thestitchbloom@yahoo.com?subject=Order enquiry: ${encodeURIComponent(product.name)}`}
+    <article className="sc" id={product.id}>
+      <Link
+        to={`/shop/${product.id}`}
         className="sc__image-link"
-        aria-label={`Enquire about ${product.name}`}
+        aria-label={`View ${product.name}`}
       >
         <div className="sc__image-wrap">
           <img
@@ -171,23 +219,34 @@ function ShopCard({ product }) {
             alt={product.name}
             className="sc__image"
             loading="lazy"
+            style={{ objectPosition: focalPoint }}
             onError={(e) => { e.target.src = '/images/products/placeholder.svg'; }}
           />
           <div className="sc__overlay" aria-hidden="true">
-            <span className="sc__overlay-label">Enquire</span>
+            <span className="sc__overlay-label">View Product</span>
           </div>
           {product.badge && (
             <span className="sc__badge">{product.badge}</span>
           )}
         </div>
-      </a>
+      </Link>
       <div className="sc__info">
-        <p className="sc__collection">{product.collectionName}</p>
-        <h3 className="sc__name">{product.name}</h3>
+        <Link to={`/shop/${product.id}`} className="sc__name-link">
+          <p className="sc__collection">{product.collectionName}</p>
+          <h3 className="sc__name">{product.name}</h3>
+        </Link>
         <p className="sc__price">{formatPrice(product.currency, product.price)}</p>
         {product.colorVariants?.length > 1 && (
           <p className="sc__variants">{product.colorVariants.length} colourways</p>
         )}
+        <button
+          className="sc__add-btn btn-split"
+          onClick={() => addItem(product)}
+          aria-label={`Add ${product.name} to bag`}
+        >
+          <span className="btn-split__label">Add to Bag</span>
+          <span className="btn-split__icon"><FiShoppingBag /></span>
+        </button>
       </div>
     </article>
   );
@@ -244,8 +303,8 @@ export default function Shop() {
               <span className="shop-featured__rule" aria-hidden="true" />
             </div>
           </div>
+          <FeaturedCarousel products={featuredProducts} />
         </div>
-        <FeaturedCarousel products={featuredProducts} />
       </section>
 
       {/* ── Filter tabs ── */}
@@ -267,14 +326,34 @@ export default function Shop() {
         </div>
       </div>
 
-      {/* ── Product grid ── */}
+      {/* ── Product grid — grouped by collection with anchor IDs ── */}
       <section className="section shop-grid-section">
         <div className="container">
-          <div className="shop-grid">
-            {filteredProducts.map((product) => (
-              <ShopCard key={product.id} product={product} />
-            ))}
-          </div>
+          {activeFilter === ALL_FILTER ? (
+            /* When showing all: group by collection with heading anchors */
+            filterOptions
+              .filter((f) => f.id !== ALL_FILTER)
+              .map(({ id, label }) => {
+                const group = allProducts.filter((p) => p.collectionId === id);
+                if (!group.length) return null;
+                return (
+                  <div key={id} id={id} className="shop-collection-group">
+                    <h2 className="shop-collection-group__title">{label}</h2>
+                    <div className="shop-grid">
+                      {group.map((product) => (
+                        <ShopCard key={product.id} product={product} />
+                      ))}
+                    </div>
+                  </div>
+                );
+              })
+          ) : (
+            <div id={activeFilter} className="shop-grid">
+              {filteredProducts.map((product) => (
+                <ShopCard key={product.id} product={product} />
+              ))}
+            </div>
+          )}
         </div>
       </section>
 

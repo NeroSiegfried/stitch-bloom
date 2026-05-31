@@ -1,6 +1,20 @@
 import { useState } from 'react';
+import { FiInstagram } from 'react-icons/fi';
+import { SITE_CONFIG } from '../../data/siteConfig';
 import '../../styles/buttons.css';
 import './Contact.css';
+
+/* ── Diagonal arrow ── */
+function ArrowDiag() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none"
+      stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
+      aria-hidden="true">
+      <line x1="2" y1="12" x2="12" y2="2" />
+      <polyline points="4,2 12,2 12,10" />
+    </svg>
+  );
+}
 
 const ENQUIRY_TOPICS = [
   'General Enquiry',
@@ -27,13 +41,11 @@ export default function Contact() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    /* The form is wired to mailto so it opens the email client.
-       Mark as submitted for UI feedback. */
     const subject = encodeURIComponent(`[${formData.topic || 'Enquiry'}] from ${formData.name}`);
     const body = encodeURIComponent(
       `Name: ${formData.name}\nEmail: ${formData.email}\nPhone: ${formData.phone}\n\n${formData.message}`
     );
-    window.location.href = `mailto:thestitchbloom@yahoo.com?subject=${subject}&body=${body}`;
+    window.location.href = `mailto:${SITE_CONFIG.email}?subject=${subject}&body=${body}`;
     setSubmitted(true);
   };
 
@@ -41,239 +53,180 @@ export default function Contact() {
     <main className="page-enter">
       {/* ── Page header ── */}
       <header className="contact-header">
-        <p className="contact-header__eyebrow">Get in touch</p>
-        <h1 className="contact-header__title">Contact Us</h1>
-        <p className="contact-header__subtitle">
-          We'd love to hear from you — whether you have a question, want to
-          place a custom order, or just want to say hello.
-        </p>
+        <div className="container">
+          <p className="contact-header__eyebrow">Get in touch</p>
+          <h1 className="contact-header__title">Contact Us</h1>
+          <p className="contact-header__subtitle">
+            We'd love to hear from you — whether you have a question, want to
+            place a custom order, or just want to say hello.
+          </p>
+        </div>
       </header>
 
-      {/* ── Contact body ── */}
-      <section className="section contact-body" aria-label="Contact information and form">
-        <div className="container">
-          <div className="contact-body__layout">
-            {/* Details panel */}
-            <div className="contact-details">
-              <h2 className="contact-details__title">How to reach us</h2>
-
-              <div className="contact-detail-item">
-                <span className="contact-detail-item__label">Email</span>
-                <address className="contact-detail-item__value">
-                  <a href="mailto:thestitchbloom@yahoo.com">
-                    thestitchbloom@yahoo.com
-                  </a>
-                </address>
-              </div>
-
-              <div className="contact-detail-item">
-                <span className="contact-detail-item__label">Phone / WhatsApp</span>
-                <address className="contact-detail-item__value">
-                  <a href="tel:+2348037988580">+234 803 798 8580</a>
-                </address>
-              </div>
-
-              <div className="contact-detail-item">
-                <span className="contact-detail-item__label">Address</span>
-                <address className="contact-detail-item__value">
-                  26 Hassan Musa Katsina Street,<br />
-                  Asokoro, Abuja, Nigeria.
-                </address>
-              </div>
-
-              <div className="contact-detail-item">
-                <span className="contact-detail-item__label">Founder</span>
-                <p className="contact-detail-item__value">Whebuma Maigari</p>
-              </div>
-
-              <div className="contact-detail-item">
-                <span className="contact-detail-item__label">Delivery windows</span>
-                <p className="contact-detail-item__value">
-                  Pre-made orders: <strong>1 week</strong><br />
-                  Custom orders: <strong>2 weeks</strong>
+      {/* ── Two-column body ── */}
+      <div className="contact-body">
+        <div className="contact-body__inner">
+          {/* ── Form panel ── */}
+          <div className="contact-form-panel">
+            <div className="contact-form-panel__inner">
+            {submitted ? (
+              <div className="contact-form__success">
+                <p className="contact-form__success-eyebrow">Message sent</p>
+                <h2 className="contact-form__success-title">Thank you for reaching out.</h2>
+                <p className="contact-form__success-body">
+                  Your email client should have opened. We aim to respond
+                  within one business day.
                 </p>
               </div>
+            ) : (
+              <form className="contact-form" onSubmit={handleSubmit} noValidate>
+                <h2 className="contact-form__heading">Send us a message</h2>
 
-              <div className="contact-detail-item">
-                <span className="contact-detail-item__label">Follow us</span>
-                <div className="contact-social">
-                  <a
-                    href="https://instagram.com/thestitchbloomco"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="contact-social__link"
-                    aria-label="Follow us on Instagram"
-                  >
-                    📸 Instagram
-                  </a>
-                  <a
-                    href="https://tiktok.com/@thestitchbloomco"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="contact-social__link"
-                    aria-label="Follow us on TikTok"
-                  >
-                    🎵 TikTok
-                  </a>
+                <div className="contact-form__row">
+                  <div className="contact-form__field">
+                    <label className="contact-form__label" htmlFor="cf-name">Name</label>
+                    <input
+                      id="cf-name"
+                      className="contact-form__input"
+                      type="text"
+                      name="name"
+                      value={formData.name}
+                      onChange={handleChange}
+                      placeholder="Your full name"
+                      required
+                    />
+                  </div>
+                  <div className="contact-form__field">
+                    <label className="contact-form__label" htmlFor="cf-email">Email</label>
+                    <input
+                      id="cf-email"
+                      className="contact-form__input"
+                      type="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleChange}
+                      placeholder="your@email.com"
+                      required
+                    />
+                  </div>
                 </div>
+
+                <div className="contact-form__row">
+                  <div className="contact-form__field">
+                    <label className="contact-form__label" htmlFor="cf-phone">Phone (optional)</label>
+                    <input
+                      id="cf-phone"
+                      className="contact-form__input"
+                      type="tel"
+                      name="phone"
+                      value={formData.phone}
+                      onChange={handleChange}
+                      placeholder="+234 ..."
+                    />
+                  </div>
+                  <div className="contact-form__field">
+                    <label className="contact-form__label" htmlFor="cf-topic">Topic</label>
+                    <select
+                      id="cf-topic"
+                      className="contact-form__input contact-form__select"
+                      name="topic"
+                      value={formData.topic}
+                      onChange={handleChange}
+                      required
+                    >
+                      <option value="" disabled>Select a topic…</option>
+                      {ENQUIRY_TOPICS.map((t) => (
+                        <option key={t} value={t}>{t}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="contact-form__field">
+                  <label className="contact-form__label" htmlFor="cf-message">Message</label>
+                  <textarea
+                    id="cf-message"
+                    className="contact-form__input contact-form__textarea"
+                    name="message"
+                    value={formData.message}
+                    onChange={handleChange}
+                    placeholder="Tell us more…"
+                    rows={5}
+                    required
+                  />
+                </div>
+
+                <button type="submit" className="btn-split btn-split--primary contact-form__submit">
+                  <span className="btn-split__label">Send Message</span>
+                  <span className="btn-split__icon" aria-hidden="true">
+                    <span className="btn-split__arrow btn-split__arrow--1"><ArrowDiag /></span>
+                    <span className="btn-split__arrow btn-split__arrow--2"><ArrowDiag /></span>
+                  </span>
+                </button>
+              </form>
+            )}
+          </div>
+        </div>
+
+        {/* ── Info panel ── */}
+        <div className="contact-info-panel">
+          <div className="contact-info-panel__inner">
+            <h2 className="contact-info__heading">How to reach us</h2>
+
+            <div className="contact-info-item">
+              <span className="contact-info-item__label">Email</span>
+              <address className="contact-info-item__value">
+                <a href={`mailto:${SITE_CONFIG.email}`}>{SITE_CONFIG.email}</a>
+              </address>
+            </div>
+
+            <div className="contact-info-item">
+              <span className="contact-info-item__label">Phone / WhatsApp</span>
+              <address className="contact-info-item__value">
+                <a href={`tel:${SITE_CONFIG.phone}`}>{SITE_CONFIG.phoneFormatted}</a>
+              </address>
+            </div>
+
+            <div className="contact-info-item">
+              <span className="contact-info-item__label">Address</span>
+              <address className="contact-info-item__value">
+                {SITE_CONFIG.address.line1}<br />
+                {SITE_CONFIG.address.line2}
+              </address>
+            </div>
+
+            <div className="contact-info-item">
+              <span className="contact-info-item__label">Founder</span>
+              <p className="contact-info-item__value">{SITE_CONFIG.founder}</p>
+            </div>
+
+            <div className="contact-info-item">
+              <span className="contact-info-item__label">Delivery windows</span>
+              <p className="contact-info-item__value">
+                Pre-made orders: <strong>{SITE_CONFIG.deliveryWindows.premade}</strong><br />
+                Custom orders: <strong>{SITE_CONFIG.deliveryWindows.custom}</strong>
+              </p>
+            </div>
+
+            <div className="contact-info-item">
+              <span className="contact-info-item__label">Follow us</span>
+              <div className="contact-info-social">
+                <a
+                  href={SITE_CONFIG.instagram.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="contact-info-social__link"
+                  aria-label="Follow us on Instagram"
+                >
+                  <FiInstagram size={14} />
+                  @{SITE_CONFIG.instagram.handle}
+                </a>
               </div>
             </div>
-
-            {/* Enquiry form */}
-            <div className="contact-form">
-              {submitted ? (
-                <div className="contact-form__success">
-                  <div className="contact-form__success-icon" aria-hidden="true">✉️</div>
-                  <h3 className="contact-form__success-title">Message sent!</h3>
-                  <p className="contact-form__success-body">
-                    Your email client has been opened with your message. We'll
-                    get back to you as soon as possible.
-                  </p>
-                  <button
-                    className="btn btn--secondary"
-                    style={{ marginTop: 'var(--space-md)' }}
-                    onClick={() => setSubmitted(false)}
-                  >
-                    Send another
-                  </button>
-                </div>
-              ) : (
-                <>
-                  <h2 className="contact-form__title">Send an enquiry</h2>
-                  <form
-                    className="contact-form__fields"
-                    onSubmit={handleSubmit}
-                    noValidate
-                  >
-                    <div className="form-field">
-                      <label className="form-field__label" htmlFor="name">
-                        Full name <span aria-hidden="true">*</span>
-                      </label>
-                      <input
-                        className="form-field__input"
-                        id="name"
-                        name="name"
-                        type="text"
-                        value={formData.name}
-                        onChange={handleChange}
-                        placeholder="Your name"
-                        required
-                        autoComplete="name"
-                      />
-                    </div>
-
-                    <div className="form-field">
-                      <label className="form-field__label" htmlFor="email">
-                        Email address <span aria-hidden="true">*</span>
-                      </label>
-                      <input
-                        className="form-field__input"
-                        id="email"
-                        name="email"
-                        type="email"
-                        value={formData.email}
-                        onChange={handleChange}
-                        placeholder="you@example.com"
-                        required
-                        autoComplete="email"
-                      />
-                    </div>
-
-                    <div className="form-field">
-                      <label className="form-field__label" htmlFor="phone">
-                        Phone / WhatsApp
-                      </label>
-                      <input
-                        className="form-field__input"
-                        id="phone"
-                        name="phone"
-                        type="tel"
-                        value={formData.phone}
-                        onChange={handleChange}
-                        placeholder="+234 …"
-                        autoComplete="tel"
-                      />
-                    </div>
-
-                    <div className="form-field">
-                      <label className="form-field__label" htmlFor="topic">
-                        Topic
-                      </label>
-                      <select
-                        className="form-field__select"
-                        id="topic"
-                        name="topic"
-                        value={formData.topic}
-                        onChange={handleChange}
-                      >
-                        <option value="">Select a topic…</option>
-                        {ENQUIRY_TOPICS.map((t) => (
-                          <option key={t} value={t}>{t}</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div className="form-field">
-                      <label className="form-field__label" htmlFor="message">
-                        Message <span aria-hidden="true">*</span>
-                      </label>
-                      <textarea
-                        className="form-field__textarea"
-                        id="message"
-                        name="message"
-                        value={formData.message}
-                        onChange={handleChange}
-                        placeholder="Tell us what you're looking for…"
-                        required
-                      />
-                    </div>
-
-                    <button
-                      type="submit"
-                      className="btn btn--primary contact-form__submit"
-                    >
-                      Send Message
-                    </button>
-                  </form>
-                </>
-              )}
-            </div>
           </div>
         </div>
-      </section>
-
-      {/* ── Location ── */}
-      <section className="section contact-location" aria-label="Our location">
-        <div className="container">
-          <div className="contact-location__inner">
-            <div className="contact-location__map">
-              <iframe
-                title="The Stitch Bloom location"
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3940.233!2d7.5248!3d9.0579!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2sAsokoro%2C+Abuja!5e0!3m2!1sen!2sng!4v1"
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-                aria-hidden="true"
-              />
-            </div>
-
-            <div className="contact-location__text">
-              <h2 className="contact-location__title">Find us in Abuja</h2>
-              <address className="contact-location__address">
-                26 Hassan Musa Katsina Street,<br />
-                Asokoro, Abuja, Nigeria.
-              </address>
-              <a
-                href="https://maps.google.com/?q=Asokoro,+Abuja,+Nigeria"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn btn--secondary"
-              >
-                Open in Google Maps
-              </a>
-            </div>
-          </div>
-        </div>
-      </section>
+        </div>{/* /.contact-body__inner */}
+      </div>
     </main>
   );
 }

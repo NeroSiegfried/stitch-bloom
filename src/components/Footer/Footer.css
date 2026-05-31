@@ -13,6 +13,7 @@
   grid-template-columns: 2fr 1fr 1fr 1fr;
   gap: var(--space-xl);
   margin-bottom: var(--space-2xl);
+  align-items: start;
 }
 
 /* ── Brand column ── */

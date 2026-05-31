@@ -11,6 +11,7 @@
   --color-brown-deep:   #2C1A0E;
   --color-brown-mid:    #5C3D2A;
   --color-brown-light:  #8B6550;
+  --color-brown-soft:   #D7C1AF;
   --color-rose-dust:    #C9A89A;
   --color-sage:         #7D8C72;
   --color-white:        #FFFFFF;
@@ -42,11 +43,20 @@
   --space-xl:  4rem;
   --space-2xl: 6rem;
   --space-3xl: 9rem;
+  --space-section: clamp(4rem, 7vw, 6rem);
+  --space-section-tight: clamp(2.5rem, 5vw, 4rem);
+  --space-edge: 1rem;           /* 16px — base grid unit */
+  --space-page-top: calc(var(--nav-height) + clamp(3.5rem, 7vw, 5.5rem));
+  --space-page-bottom: clamp(3rem, 6vw, 4.75rem);
+  --space-panel: clamp(1.5rem, 3vw, 2.5rem);
 
   /* ── Layout ── */
-  --max-width:      1280px;
-  --container-pad:  clamp(1.5rem, 5vw, 5rem);
-  --nav-height:     72px;
+  --max-width:      1400px;
+  --container-pad:  var(--space-edge);  /* 16px inline gutter */
+  --nav-height:     calc(var(--space-edge) + 50px);  /* 66px = 16px margin + 50px bar */
+  --edge-gap:       var(--space-edge);
+  --nav-icon-cell-width: 60px;
+  --arrow-square-size: 50px;
 
   /* ── Motion ── */
   --transition-fast:   150ms ease;

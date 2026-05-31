@@ -19,7 +19,7 @@ export default function ProductCard({ product, showCollection = false }) {
 
   return (
     <article className="product-card">
-      <Link to={`/shop#${id}`} aria-label={`View ${name}`} tabIndex={-1}>
+      <Link to={`/shop/${id}`} aria-label={`View ${name}`} tabIndex={-1}>
         <div className="product-card__image-wrap">
           {primaryImage ? (
             <img
@@ -46,9 +46,8 @@ export default function ProductCard({ product, showCollection = false }) {
           <p className="product-card__collection">{collectionName}</p>
         )}
         <h3 className="product-card__name">
-          <Link to={`/shop#${id}`}>{name}</Link>
+          <Link to={`/shop/${id}`}>{name}</Link>
         </h3>
-        <p className="product-card__price">{formatPrice(currency, price)}</p>
         {measurement && (
           <p className="product-card__meta">{measurement}</p>
         )}
@@ -57,6 +56,7 @@ export default function ProductCard({ product, showCollection = false }) {
             <span aria-hidden="true">✦</span> Customisation available
           </p>
         )}
+        <p className="product-card__price">{formatPrice(currency, price)}</p>
       </div>
     </article>
   );

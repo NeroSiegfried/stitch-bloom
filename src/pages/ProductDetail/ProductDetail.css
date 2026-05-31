@@ -1,0 +1,298 @@
+/* ============================================================
+   Product Detail Page
+   ============================================================ */
+
+/* ── 404 state ── */
+.pd-not-found {
+  padding-top: var(--space-page-top);
+  padding-bottom: var(--space-page-bottom);
+  text-align: center;
+}
+
+.pd-not-found__eyebrow {
+  font-family: var(--font-heading);
+  font-size: var(--size-4xl);
+  font-weight: 300;
+  color: var(--color-border);
+  line-height: 1;
+  margin-bottom: var(--space-sm);
+}
+
+.pd-not-found__title {
+  font-family: var(--font-heading);
+  font-size: var(--size-2xl);
+  font-weight: 300;
+  color: var(--color-brown-deep);
+  margin-bottom: var(--space-lg);
+}
+
+/* ── Back link — inside pd-layout, spans full width ── */
+.pd-back {
+  grid-column: 1 / -1;
+  font-size: var(--size-xs);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+  padding-bottom: var(--space-sm);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.pd-back:hover {
+  color: var(--color-brown-deep);
+}
+
+/* ── Product layout ── */
+.pd-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: 80vh;
+  max-width: var(--max-width);
+  margin-inline: auto;
+  padding: calc(var(--nav-height) + var(--space-section-tight)) var(--container-pad) var(--space-section);
+  gap: var(--space-section);
+  align-items: start;
+}
+
+/* ── Gallery ── */
+.pd-gallery {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  position: sticky;
+  top: calc(var(--nav-height) + var(--space-section-tight) + var(--space-lg));
+}
+
+.pd-gallery__main {
+  position: relative;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  background-color: var(--color-cream-dark);
+}
+
+.pd-gallery__main-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+}
+
+.pd-gallery__badge {
+  position: absolute;
+  top: var(--space-sm);
+  left: var(--space-sm);
+  z-index: 1;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  background-color: var(--color-terracotta);
+  color: var(--color-white);
+  padding: 4px 10px;
+}
+
+.pd-gallery__thumbs {
+  display: flex;
+  gap: var(--space-xs);
+  flex-wrap: wrap;
+}
+
+.pd-gallery__thumb {
+  width: 72px;
+  aspect-ratio: 1;
+  overflow: hidden;
+  background: none;
+  border: 2px solid transparent;
+  padding: 0;
+  cursor: pointer;
+  transition: border-color var(--transition-fast);
+}
+
+.pd-gallery__thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.pd-gallery__thumb--active {
+  border-color: var(--color-terracotta);
+}
+
+/* ── Info ── */
+.pd-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+/* Colour variant selector */
+.pd-info__variants {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-bottom: var(--space-xs);
+}
+
+.pd-info__variants-label {
+  font-size: var(--size-xs);
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-brown-mid);
+}
+
+.pd-info__variant-list {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.pd-info__variant-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: 2px solid transparent;
+  padding: 2px;
+  cursor: pointer;
+  transition: border-color var(--transition-fast);
+  font-size: var(--size-xs);
+  color: var(--color-text-muted);
+  letter-spacing: 0.04em;
+}
+
+.pd-info__variant-btn img {
+  width: 64px;
+  aspect-ratio: 4/5;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+}
+
+.pd-info__variant-btn--active {
+  border-color: var(--color-terracotta);
+  color: var(--color-brown-deep);
+}
+
+.pd-info__variant-btn:hover:not(.pd-info__variant-btn--active) {
+  border-color: var(--color-brown-mid);
+}
+
+.pd-info__collection {
+  font-size: var(--size-xs);
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-terracotta);
+}
+
+.pd-info__name {
+  font-family: var(--font-heading);
+  font-size: clamp(var(--size-xl), 3vw, var(--size-3xl));
+  font-weight: 300;
+  color: var(--color-brown-deep);
+  line-height: 1.1;
+  margin-bottom: var(--space-xs);
+}
+
+.pd-info__price {
+  font-family: var(--font-heading);
+  font-size: var(--size-xl);
+  font-weight: 400;
+  color: var(--color-brown-deep);
+}
+
+.pd-info__badge {
+  display: inline-flex;
+  background-color: var(--color-cream-dark);
+  border: 1px solid var(--color-border);
+  padding: 6px 12px;
+  font-size: var(--size-xs);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-terracotta);
+}
+
+.pd-info__detail-row {
+  display: flex;
+  gap: var(--space-sm);
+  align-items: baseline;
+}
+
+.pd-info__detail-label {
+  font-size: var(--size-xs);
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-brown-mid);
+  min-width: 90px;
+}
+
+.pd-info__detail-value {
+  font-size: var(--size-sm);
+  color: var(--color-text-muted);
+}
+
+.pd-info__description {
+  font-size: var(--size-base);
+  color: var(--color-text-muted);
+  line-height: 1.8;
+  max-width: 40ch;
+}
+
+.pd-info__divider {
+  height: 1px;
+  background-color: var(--color-border);
+  margin-block: var(--space-xs);
+}
+
+.pd-info__actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  align-items: flex-start;
+}
+
+.pd-info__add-btn--added .btn-split__label {
+  color: var(--color-sage);
+}
+
+.pd-info__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: var(--space-sm);
+  border-top: 1px solid var(--color-border);
+}
+
+.pd-info__meta-item {
+  font-size: var(--size-xs);
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
+/* ── Responsive ── */
+@media (max-width: 860px) {
+  .pd-layout {
+    grid-template-columns: 1fr;
+    padding-top: var(--space-md);
+  }
+
+  .pd-gallery {
+    position: static;
+  }
+
+  .pd-back-bar {
+    position: static;
+    margin-top: 0;
+  }
+
+  .pd-page {
+    padding-top: var(--nav-height);
+  }
+}

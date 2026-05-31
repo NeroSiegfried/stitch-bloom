@@ -50,8 +50,8 @@
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  width: 36px;
-  height: 36px;
+  width: var(--arrow-square-size);
+  height: var(--arrow-square-size);
   border-radius: 0;
   background-color: rgba(247, 242, 234, 0.9);
   border: 1px solid var(--color-border);
@@ -65,14 +65,15 @@
               opacity var(--transition-fast);
   z-index: 2;
   opacity: 0;
+  overflow: hidden;
 }
 
 .gallery__stage:hover .gallery__arrow {
   opacity: 1;
 }
 
-.gallery__arrow--prev { left: 10px; }
-.gallery__arrow--next { right: 10px; }
+.gallery__arrow--prev { left: var(--space-edge); }
+.gallery__arrow--next { right: var(--space-edge); }
 
 .gallery__arrow:hover {
   background-color: var(--color-cream);

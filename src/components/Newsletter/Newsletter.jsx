@@ -1,13 +1,51 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
+import { SITE_CONFIG } from '../../data/siteConfig';
 import './Newsletter.css';
+
+const STORAGE_KEY = 'sb_newsletter_email';
 
 export default function Newsletter() {
   const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const location = useLocation();
 
-  const handleSubmit = (e) => {
+  // Reset the "thank you" state on every page navigation so the form
+  // is always available when the user visits a new page.
+  useEffect(() => {
+    setSubmitted(false);
+    setEmail('');
+  }, [location.pathname]);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (email.trim()) setSubmitted(true);
+    if (!email.trim()) return;
+    setLoading(true);
+
+    try {
+      const key = SITE_CONFIG.newsletter?.web3formsKey;
+      if (key) {
+        await fetch('https://api.web3forms.com/submit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          body: JSON.stringify({
+            access_key: key,
+            subject: 'New newsletter subscriber — The Stitch Bloom',
+            from_name: 'The Stitch Bloom Website',
+            email,
+            message: `New newsletter subscriber: ${email}`,
+          }),
+        });
+      }
+    } catch (_) {
+      /* fail silently — form shows success regardless so the user isn't confused */
+    }
+
+    try { localStorage.setItem(STORAGE_KEY, email); } catch (_) { /* private mode */ }
+
+    setLoading(false);
+    setSubmitted(true);
   };
 
   return (
@@ -35,9 +73,10 @@ export default function Newsletter() {
                 placeholder="Your email address"
                 aria-label="Email address"
                 required
+                disabled={loading}
               />
-              <button type="submit" className="newsletter__submit">
-                Submit
+              <button type="submit" className="newsletter__submit" disabled={loading}>
+                {loading ? 'Subscribing…' : 'Submit'}
               </button>
             </form>
           )}

@@ -9,7 +9,8 @@
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  padding: 0.75rem 1.75rem;
+  height: 50px;
+  padding: 0 1.75rem;
   font-family: var(--font-body);
   font-size: var(--size-xs);
   font-weight: 500;
@@ -100,3 +101,150 @@
   align-items: center;
   justify-content: center;
 }
+
+/* ── Split button — M&S two-cell style ── */
+/* Usage:
+   <button class="btn-split">
+     <span class="btn-split__label">Shop Collection</span>
+     <span class="btn-split__icon"><FiArrowRight /></span>
+   </button>
+*/
+.btn-split {
+  display: inline-flex;
+  align-items: stretch;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  padding: 0;
+  font-family: var(--font-body);
+  font-size: var(--size-xs);
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-decoration: none;
+  transition: color var(--transition-base);
+  color: currentColor;
+}
+
+.btn-split__label {
+  height: 50px;
+  padding: 0 1.4rem;
+  border: 1px solid currentColor;
+  border-right: none;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  transition: background-color var(--transition-base), color var(--transition-base);
+}
+
+.btn-split__icon {
+  width: 50px;
+  min-width: 50px;
+  height: 50px;
+  border: 1px solid currentColor;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+  transition: background-color var(--transition-base), color var(--transition-base);
+}
+
+.btn-split__icon svg {
+  width: 14px;
+  height: 14px;
+  display: block;
+  flex-shrink: 0;
+}
+
+/* ── Diagonal arrow animation (↗ style, scraped from M&S) ──
+   Use two <span class="btn-split__arrow btn-split__arrow--1/2"> inside the icon cell.
+   Arrow 1 sits at centre (visible). Arrow 2 is parked at bottom-left (hidden by overflow).
+   On hover both slide diagonally: arrow 1 exits top-right, arrow 2 enters from bottom-left.
+*/
+.btn-split__arrow {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-split__arrow--1 {
+  transform: translate(0, 0);           /* centre — visible */
+}
+
+.btn-split__arrow--2 {
+  transform: translate(-32px, 32px);    /* bottom-left — hidden by overflow */
+}
+
+.btn-split:hover .btn-split__arrow--1 {
+  transform: translate(32px, -32px);    /* exit top-right */
+}
+
+.btn-split:hover .btn-split__arrow--2 {
+  transform: translate(0, 0);           /* enter from bottom-left */
+}
+
+.btn-split:hover .btn-split__label,
+.btn-split:hover .btn-split__icon {
+  background-color: var(--color-brown-deep);
+  color: var(--color-cream);
+}
+
+/* ── Light variant — on dark backgrounds ── */
+.btn-split--light .btn-split__label,
+.btn-split--light .btn-split__icon {
+  color: var(--color-cream);
+}
+
+.btn-split--light:hover .btn-split__label,
+.btn-split--light:hover .btn-split__icon {
+  background-color: var(--color-cream);
+  color: var(--color-brown-deep);
+}
+
+/* ── Primary fill variant — terracotta label on light backgrounds ── */
+.btn-split--primary .btn-split__label {
+  background-color: var(--color-terracotta);
+  border-color: var(--color-brown-deep);
+  color: var(--color-white);
+}
+
+.btn-split--primary .btn-split__icon {
+  background-color: var(--color-terracotta);
+  border-color: var(--color-brown-deep);
+  color: var(--color-white);
+}
+
+.btn-split--primary:hover .btn-split__label,
+.btn-split--primary:hover .btn-split__icon {
+  background-color: var(--color-brown-deep);
+  border-color: var(--color-brown-deep);
+  color: var(--color-cream);
+}
+
+.btn-split--primary:hover .btn-split__icon {
+  border-left-color: rgba(244, 241, 235, 0.35);
+}
+
+/* ── Primary-light variant — filled cream, for dark hero backgrounds ── */
+.btn-split--primary-light .btn-split__label {
+  background-color: var(--color-cream);
+  border-color: var(--color-cream);
+  color: var(--color-brown-deep);
+}
+
+.btn-split--primary-light .btn-split__icon {
+  border-color: var(--color-cream);
+  color: var(--color-brown-deep);
+}
+
+.btn-split--primary-light:hover .btn-split__label,
+.btn-split--primary-light:hover .btn-split__icon {
+  background-color: var(--color-brown-deep);
+  border-color: var(--color-brown-deep);
+  color: var(--color-cream);
+}
+

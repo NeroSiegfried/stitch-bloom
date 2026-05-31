@@ -1,137 +1,244 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { NavLink, Link, useLocation } from 'react-router-dom';
+import { FiShoppingBag, FiSearch, FiX } from 'react-icons/fi';
+import { useCart } from '../../context/CartContext';
+import { getAllProducts } from '../../data/products';
 import './Navbar.css';
 
-const NAV_LINKS = [
-  { label: 'Shop',    to: '/shop' },
+const SHOP_LINKS = [
+  { label: 'Shop All',         to: '/shop' },
+  { label: 'Najma Collection', to: '/shop#najma' },
+  { label: 'Gadget Sleeves',   to: '/shop#gadget-sleeves' },
+  { label: 'Accessories',      to: '/shop#accessories' },
+];
+
+const BRAND_LINKS = [
   { label: 'About',   to: '/about' },
   { label: 'Contact', to: '/contact' },
 ];
 
-/* Simple bag SVG inline — no extra dependency needed */
-function BagIcon({ className }) {
+function HamburgerIcon() {
   return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.4"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
-      <line x1="3" y1="6" x2="21" y2="6" />
-      <path d="M16 10a4 4 0 0 1-8 0" />
+    <svg width="18" height="13" viewBox="0 0 18 13" fill="none" aria-hidden="true">
+      <line x1="0" y1="0.75"  x2="18" y2="0.75"  stroke="currentColor" strokeWidth="1.5"/>
+      <line x1="0" y1="6.5"   x2="18" y2="6.5"   stroke="currentColor" strokeWidth="1.5"/>
+      <line x1="0" y1="12.25" x2="18" y2="12.25" stroke="currentColor" strokeWidth="1.5"/>
     </svg>
   );
 }
 
 export default function Navbar() {
-  const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [query, setQuery] = useState('');
+  const searchInputRef = useRef(null);
   const location = useLocation();
-  const isHomePage = location.pathname === '/';
-  const cartCount = 0;
+  const { count, setIsOpen: openCart } = useCart();
+
+  const allProducts = getAllProducts();
+  const searchResults = query.trim().length > 1
+    ? allProducts.filter((p) =>
+        p.name.toLowerCase().includes(query.toLowerCase()) ||
+        p.collectionName?.toLowerCase().includes(query.toLowerCase())
+      )
+    : [];
+
+  useEffect(() => setIsMenuOpen(false), [location.pathname]);
+  useEffect(() => {
+    if (searchOpen) {
+      setTimeout(() => searchInputRef.current?.focus(), 50);
+    } else {
+      setQuery('');
+    }
+  }, [searchOpen]);
 
   useEffect(() => {
-    // Reset scroll state on route change
-    setIsScrolled(window.scrollY > 60);
-    const handleScroll = () => setIsScrolled(window.scrollY > 60);
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [location.pathname]);
+    const onKey = (e) => { if (e.key === 'Escape') setSearchOpen(false); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
 
-  const closeMenu = () => setIsMenuOpen(false);
+  useEffect(() => {
+    document.body.style.overflow = isMenuOpen ? 'hidden' : '';
+    return () => { document.body.style.overflow = ''; };
+  }, [isMenuOpen]);
 
-  // Only transparent on the home page when not scrolled
-  const isTransparent = isHomePage && !isScrolled && !isMenuOpen;
-
-  const navClass = [
-    'navbar',
-    isTransparent ? 'navbar--transparent' : 'navbar--solid',
-  ].join(' ');
+  const close = () => setIsMenuOpen(false);
+  const closeSearch = () => setSearchOpen(false);
 
   return (
     <>
-      <nav className={navClass} aria-label="Main navigation">
+      <div
+        className={`navbar__backdrop${isMenuOpen ? ' navbar__backdrop--open' : ''}`}
+        onClick={close}
+        aria-hidden="true"
+      />
+
+      <nav className="navbar" aria-label="Main navigation">
         <div className="navbar__inner">
 
-          {/* Left: page links */}
-          <ul className="navbar__links" role="list">
-            {NAV_LINKS.map(({ label, to }) => (
-              <li key={to}>
-                <NavLink
-                  to={to}
-                  className={({ isActive }) =>
-                    `navbar__link${isActive ? ' navbar__link--active' : ''}`
-                  }
-                >
-                  {label}
-                </NavLink>
-              </li>
-            ))}
-          </ul>
+        <button
+          className={`navbar__cell navbar__menu-cell${isMenuOpen ? ' navbar__menu-cell--open' : ''}`}
+          onClick={() => { setIsMenuOpen(p => !p); setSearchOpen(false); }}
+          aria-expanded={isMenuOpen}
+          aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
+        >
+          {isMenuOpen ? <FiX size={18} aria-hidden="true" /> : <HamburgerIcon />}
+          <span className="navbar__menu-label">{isMenuOpen ? 'Close' : 'Menu'}</span>
+        </button>
 
-          {/* Centre: brand logo */}
-          <Link to="/" className="navbar__logo" onClick={closeMenu}>
-            <img
-              src="/images/logo.svg"
-              alt="The Stitch Bloom"
-              className="navbar__logo-image"
-            />
-            <span className="navbar__logo-text">The Stitch Bloom</span>
-          </Link>
+        <Link to="/" className="navbar__cell navbar__logo-cell" onClick={close} aria-label="The Stitch Bloom">
+          {/* Small screen SVG logo */}
+          <img
+            src="/images/logo.svg"
+            alt="The Stitch Bloom"
+            className="navbar__logo-img"
+            onError={(e) => {
+              e.target.style.display = 'none';
+              e.target.nextElementSibling.style.display = 'flex';
+            }}
+          />
+          {/* Large screen typography logo */}
+          <div className="navbar__logo-text-wrapper">
+            <span className="navbar__logo-the">The</span>
+            <span className="navbar__logo-bloom">Stitch Bloom</span>
+          </div>
+        </Link>
 
-          {/* Right: cart + mobile toggle */}
-          <div className="navbar__actions">
-            <button
-              className="navbar__cart-btn"
-              aria-label={`Bag${cartCount > 0 ? `, ${cartCount} items` : ''}`}
-            >
-              <BagIcon className="navbar__cart-icon" />
-              {cartCount > 0 && (
-                <span className="navbar__cart-count" aria-hidden="true">
-                  {cartCount}
-                </span>
-              )}
-            </button>
+        <button
+          className={`navbar__cell navbar__search-cell${searchOpen ? ' navbar__search-cell--open' : ''}`}
+          onClick={() => { setSearchOpen(p => !p); setIsMenuOpen(false); }}
+          aria-label={searchOpen ? 'Close search' : 'Search products'}
+          aria-expanded={searchOpen}
+        >
+          {searchOpen ? <FiX size={18} aria-hidden="true" /> : <FiSearch size={18} aria-hidden="true" />}
+        </button>
 
-            <button
-              className={`navbar__toggle${isMenuOpen ? ' navbar__toggle--open' : ''}`}
-              aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
-              aria-expanded={isMenuOpen}
-              onClick={() => setIsMenuOpen((p) => !p)}
-            >
-              <span className="navbar__toggle-bar" />
-              <span className="navbar__toggle-bar" />
-              <span className="navbar__toggle-bar" />
-            </button>
+        <button
+          className="navbar__cell navbar__cart-cell"
+          onClick={() => openCart(true)}
+          aria-label={`Bag${count > 0 ? `, ${count} item${count !== 1 ? 's' : ''}` : ''}`}
+        >
+          <FiShoppingBag size={18} aria-hidden="true" />
+          {count > 0 && (
+            <span className="navbar__cart-count" aria-hidden="true">{count}</span>
+          )}
+        </button>
+
+        </div>{/* /.navbar__inner */}
+      </nav>
+
+      <div
+        className={`navbar__panel${isMenuOpen ? ' navbar__panel--open' : ''}`}
+        role="dialog"
+        aria-label="Navigation menu"
+        aria-hidden={!isMenuOpen}
+      >
+        <div className="navbar__panel-inner">
+
+          <div className="navbar__panel-section">
+            <p className="navbar__panel-heading">SHOP</p>
+            <ul className="navbar__panel-links" role="list">
+              {SHOP_LINKS.map(({ label, to }) => (
+                <li key={to}>
+                  <NavLink
+                    to={to}
+                    className={({ isActive }) =>
+                      `navbar__panel-link${isActive ? ' navbar__panel-link--active' : ''}`
+                    }
+                    onClick={close}
+                  >
+                    {label}
+                    <span className="navbar__panel-underline-wrap" aria-hidden="true">
+                      <span className="navbar__panel-underline" />
+                    </span>
+                  </NavLink>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="navbar__panel-section">
+            <p className="navbar__panel-heading">BRAND</p>
+            <ul className="navbar__panel-links" role="list">
+              {BRAND_LINKS.map(({ label, to }) => (
+                <li key={to}>
+                  <NavLink
+                    to={to}
+                    className={({ isActive }) =>
+                      `navbar__panel-link${isActive ? ' navbar__panel-link--active' : ''}`
+                    }
+                    onClick={close}
+                  >
+                    {label}
+                    <span className="navbar__panel-underline-wrap" aria-hidden="true">
+                      <span className="navbar__panel-underline" />
+                    </span>
+                  </NavLink>
+                </li>
+              ))}
+            </ul>
           </div>
 
         </div>
-      </nav>
+      </div>
 
-      {/* Mobile full-screen drawer */}
-      <nav
-        className={`navbar__drawer${isMenuOpen ? ' navbar__drawer--open' : ''}`}
-        aria-label="Mobile navigation"
+      {/* ── Search overlay ── */}
+      <div
+        className={`navbar__search-overlay${searchOpen ? ' navbar__search-overlay--open' : ''}`}
+        aria-hidden={!searchOpen}
       >
-        <NavLink to="/"        end className={({ isActive }) => `navbar__link${isActive ? ' navbar__link--active' : ''}`} onClick={closeMenu}>Home</NavLink>
-        {NAV_LINKS.map(({ label, to }) => (
-          <NavLink
-            key={to}
-            to={to}
-            className={({ isActive }) =>
-              `navbar__link${isActive ? ' navbar__link--active' : ''}`
-            }
-            onClick={closeMenu}
-          >
-            {label}
-          </NavLink>
-        ))}
-      </nav>
+        <div className="navbar__search-inner container">
+          <div className="navbar__search-input-wrap">
+            <FiSearch size={16} className="navbar__search-icon" aria-hidden="true" />
+            <input
+              ref={searchInputRef}
+              type="search"
+              placeholder="Search products…"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              className="navbar__search-input"
+              aria-label="Search products"
+            />
+            {query && (
+              <button className="navbar__search-clear" onClick={() => setQuery('')} aria-label="Clear search">
+                <FiX size={14} />
+              </button>
+            )}
+          </div>
+
+          {query.trim().length > 1 && (
+            <div className="navbar__search-results">
+              {searchResults.length === 0 ? (
+                <p className="navbar__search-empty">No products found for "{query}"</p>
+              ) : (
+                <ul className="navbar__search-list" role="list">
+                  {searchResults.map((p) => (
+                    <li key={p.id}>
+                      <Link
+                        to={`/shop/${p.id}`}
+                        className="navbar__search-result"
+                        onClick={closeSearch}
+                      >
+                        <img
+                          src={p.images?.[0]}
+                          alt={p.name}
+                          className="navbar__search-result-img"
+                          onError={(e) => { e.target.style.display = 'none'; }}
+                        />
+                        <div className="navbar__search-result-info">
+                          <span className="navbar__search-result-collection">{p.collectionName}</span>
+                          <span className="navbar__search-result-name">{p.name}</span>
+                        </div>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
     </>
   );
 }

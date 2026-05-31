@@ -1,4 +1,6 @@
 import { Link } from 'react-router-dom';
+import { FiInstagram } from 'react-icons/fi';
+import { SITE_CONFIG } from '../../data/siteConfig';
 import './Footer.css';
 
 const year = new Date().getFullYear();
@@ -19,20 +21,13 @@ export default function Footer() {
             </p>
             <div className="footer__social-links">
               <a
-                href="https://instagram.com/thestitchbloomco"
+                href={SITE_CONFIG.instagram.url}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="footer__social-link"
               >
+                <FiInstagram size={14} style={{ marginRight: 6 }} />
                 Instagram
-              </a>
-              <a
-                href="https://tiktok.com/@thestitchbloomco"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="footer__social-link"
-              >
-                TikTok
               </a>
             </div>
           </div>
@@ -62,23 +57,23 @@ export default function Footer() {
 
             <div className="footer__contact-item">
               <span className="footer__contact-label">Phone</span>
-              <a href="tel:+2348037988580" className="footer__contact-value footer__link">
-                +234 803 798 8580
+              <a href={`tel:${SITE_CONFIG.phone}`} className="footer__contact-value footer__link">
+                {SITE_CONFIG.phoneFormatted}
               </a>
             </div>
 
             <div className="footer__contact-item">
               <span className="footer__contact-label">Email</span>
-              <a href="mailto:thestitchbloom@yahoo.com" className="footer__contact-value footer__link">
-                thestitchbloom@yahoo.com
+              <a href={`mailto:${SITE_CONFIG.email}`} className="footer__contact-value footer__link">
+                {SITE_CONFIG.email}
               </a>
             </div>
 
             <div className="footer__contact-item">
               <span className="footer__contact-label">Address</span>
               <address className="footer__contact-value" style={{ fontStyle: 'normal' }}>
-                26 Hassan Musa Katsina Street,<br />
-                Asokoro, Abuja, Nigeria.
+                {SITE_CONFIG.address.line1}<br />
+                {SITE_CONFIG.address.line2}
               </address>
             </div>
 

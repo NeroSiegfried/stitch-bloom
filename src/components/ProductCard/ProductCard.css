@@ -8,6 +8,7 @@
   flex-direction: column;
   gap: 14px;
   cursor: pointer;
+  height: 100%;
 }
 
 /* ── Image container ── */
@@ -94,6 +95,9 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
+  flex: 1;
+  /* Ensures all cards in a row share the same info height */
+  height: 100%;
 }
 
 .product-card__collection {
@@ -116,6 +120,8 @@
   font-size: var(--size-sm);
   font-weight: 400;
   color: var(--color-brown-deep);
+  margin-top: auto;
+  padding-top: 6px;
 }
 
 .product-card__meta {

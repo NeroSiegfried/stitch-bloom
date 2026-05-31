@@ -1,0 +1,171 @@
+/* ───────────────────────────────────────────
+   DiagonalCarousel — M&S faithful recreation
+─────────────────────────────────────────── */
+.dc {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  user-select: none;
+  width: 100%;
+}
+
+.dc__stage {
+  position: relative;
+  width: 100%;
+  overflow: visible;
+}
+
+.dc__card {
+  position: absolute;
+  overflow: hidden;
+  cursor: pointer;
+  will-change: transform, opacity;
+  background: transparent;
+  border: 1px solid transparent;
+  transition: border-color 0.25s ease, background-color 0.25s ease;
+}
+
+.dc__card:hover {
+  background: transparent;
+  border-color: var(--color-terracotta);
+}
+
+.dc__card--active {
+  cursor: default;
+}
+
+.dc__card-link {
+  display: block;
+  width: 100%;
+  height: 100%;
+  text-decoration: none;
+}
+
+.dc__card-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+  transition: transform 0.65s cubic-bezier(0.25, 0, 0, 1);
+}
+
+.dc__card--active:hover .dc__card-image {
+  transform: scale(1.025);
+}
+
+.dc__card-badge {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  background: var(--color-terracotta);
+  color: var(--color-cream);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+}
+
+/* Controls */
+.dc__controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  width: 100%;
+  padding-top: var(--space-sm);
+}
+
+/* Nav buttons: 50×50, transparent, 1px solid brown — exact M&S spec */
+.dc__nav-btn {
+  position: relative;
+  width: 50px;
+  height: 50px;
+  border: 1px solid var(--color-brown-deep);
+  background-color: transparent;
+  color: var(--color-brown-deep);
+  cursor: pointer;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease;
+}
+
+.dc__nav-btn:hover {
+  background-color: var(--color-brown-deep);
+  color: var(--color-cream);
+}
+
+/* Two overlapping spans; slide out on hover */
+.dc__nav-arrow {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.28s ease, opacity 0.28s ease;
+}
+
+/* Prev (←): current exits left, enters from right */
+.dc__nav-btn--left .dc__nav-arrow--1  { transform: translateX(0);    opacity: 1; }
+.dc__nav-btn--left .dc__nav-arrow--2  { transform: translateX(50px);  opacity: 0; }
+.dc__nav-btn--left:hover .dc__nav-arrow--1  { transform: translateX(-50px); opacity: 0; }
+.dc__nav-btn--left:hover .dc__nav-arrow--2  { transform: translateX(0);     opacity: 1; }
+
+/* Next (→): current exits right, enters from left */
+.dc__nav-btn--right .dc__nav-arrow--1  { transform: translateX(0);    opacity: 1; }
+.dc__nav-btn--right .dc__nav-arrow--2  { transform: translateX(-50px); opacity: 0; }
+.dc__nav-btn--right:hover .dc__nav-arrow--1  { transform: translateX(50px); opacity: 0; }
+.dc__nav-btn--right:hover .dc__nav-arrow--2  { transform: translateX(0);    opacity: 1; }
+
+/* Dots */
+.dc__dots {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.dc__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1px solid rgba(93, 64, 55, 0.45);
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.25s, transform 0.25s;
+}
+
+.dc__dot--active {
+  background: var(--color-brown-deep);
+  transform: scale(1.25);
+}
+
+/* On dark hero: terracotta border on hover */
+.home-feature .dc__card:hover {
+  border-color: var(--color-terracotta);
+  background: transparent;
+}
+
+.home-feature .dc__nav-btn {
+  border-color: rgba(247, 242, 235, 0.7);
+  background-color: rgba(44, 26, 14, 0.22);
+  color: var(--color-cream);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.home-feature .dc__nav-btn:hover {
+  background-color: var(--color-cream);
+  color: var(--color-brown-deep);
+  border-color: var(--color-cream);
+}
+.home-feature .dc__dot {
+  border-color: rgba(247, 242, 235, 0.55);
+}
+.home-feature .dc__dot--active {
+  background: var(--color-cream);
+  border-color: var(--color-cream);
+}
