@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { HashRouter, Routes, Route } from 'react-router-dom';
 import { CartProvider } from './context/CartContext';
 import Navbar      from './components/Navbar/Navbar';
 import CartDrawer  from './components/CartDrawer/CartDrawer';
@@ -16,7 +16,7 @@ import './styles/reveal.css';
 export default function App() {
   return (
     <CartProvider>
-    <BrowserRouter>
+    <HashRouter>
       <ScrollToTop />
       <Navbar />
       <CartDrawer />
@@ -32,7 +32,7 @@ export default function App() {
 
       <Newsletter />
       <Footer />
-    </BrowserRouter>
+    </HashRouter>
     </CartProvider>
   );
 }
