@@ -171,34 +171,37 @@ export default function DiagonalCarousel({ items, compact = false, spread = fals
             </div>
           );
         })}
-      </div>
 
-      {/* Controls: prev / dots / next — absolutely placed at bottom-left like M&S */}
-      <div className="dc__controls">
-        <button className="dc__nav-btn dc__nav-btn--left" onClick={prev} aria-label="Previous product">
-          <span className="dc__nav-arrow dc__nav-arrow--1"><NavSvg rotate /></span>
-          <span className="dc__nav-arrow dc__nav-arrow--2"><NavSvg rotate /></span>
-        </button>
+        {/* Controls: prev / dots / next — absolutely positioned 16px below the center card */}
+        <div
+          className="dc__controls"
+          style={cw > 0 ? { position: 'absolute', top: cardTop + cardH + 16, left: 0, right: 0, zIndex: items.length + 2 } : undefined}
+        >
+          <button className="dc__nav-btn dc__nav-btn--left" onClick={prev} aria-label="Previous product">
+            <span className="dc__nav-arrow dc__nav-arrow--1"><NavSvg rotate /></span>
+            <span className="dc__nav-arrow dc__nav-arrow--2"><NavSvg rotate /></span>
+          </button>
 
-        {!compact && (
-          <div className="dc__dots" role="tablist" aria-label="Carousel navigation">
-            {items.map((item, i) => (
-              <button
-                key={item.id}
-                role="tab"
-                aria-selected={i === active}
-                aria-label={`Go to ${item.name}`}
-                className={`dc__dot${i === active ? ' dc__dot--active' : ''}`}
-                onClick={() => goTo(i)}
-              />
-            ))}
-          </div>
-        )}
+          {!compact && (
+            <div className="dc__dots" role="tablist" aria-label="Carousel navigation">
+              {items.map((item, i) => (
+                <button
+                  key={item.id}
+                  role="tab"
+                  aria-selected={i === active}
+                  aria-label={`Go to ${item.name}`}
+                  className={`dc__dot${i === active ? ' dc__dot--active' : ''}`}
+                  onClick={() => goTo(i)}
+                />
+              ))}
+            </div>
+          )}
 
-        <button className="dc__nav-btn dc__nav-btn--right" onClick={next} aria-label="Next product">
-          <span className="dc__nav-arrow dc__nav-arrow--1"><NavSvg /></span>
-          <span className="dc__nav-arrow dc__nav-arrow--2"><NavSvg /></span>
-        </button>
+          <button className="dc__nav-btn dc__nav-btn--right" onClick={next} aria-label="Next product">
+            <span className="dc__nav-arrow dc__nav-arrow--1"><NavSvg /></span>
+            <span className="dc__nav-arrow dc__nav-arrow--2"><NavSvg /></span>
+          </button>
+        </div>
       </div>
 
     </div>

@@ -205,7 +205,7 @@ export default function About() {
             <div className="about-founder__image-wrap">
               <img
                 className="about-founder__image"
-                src={assetUrl('/images/founder.jpg')}
+                src={assetUrl('/CEO.JPG')}
                 alt="Whebuma Maigari, founder of The Stitch Bloom"
                 onError={(e) => { e.currentTarget.style.opacity = 0; }}
               />
