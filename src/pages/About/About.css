@@ -347,6 +347,8 @@
   aspect-ratio: 4 / 5;
   overflow: hidden;
   background-color: var(--color-brown-mid);
+  width: 100%;
+  max-width: 380px;
 }
 
 .about-founder__image {

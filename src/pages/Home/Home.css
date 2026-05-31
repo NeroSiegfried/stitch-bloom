@@ -678,7 +678,7 @@
 
   .home-feature__stage {
     width: 100%;
-    padding: calc(var(--nav-height) + 24px) var(--edge-gap) 16px;
+    padding: calc(var(--nav-height) + 24px) var(--edge-gap) 64px;
     display: flex;
     flex-direction: column;
     gap: 16px;
