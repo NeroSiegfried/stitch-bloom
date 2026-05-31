@@ -1,11 +1,26 @@
-import { createContext, useContext, useState, useCallback } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { formatPrice } from '../data/products';
 
 const CartContext = createContext(null);
+const CART_KEY = 'sb_cart';
+
+function loadCart() {
+  try {
+    const raw = localStorage.getItem(CART_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
 
 export function CartProvider({ children }) {
-  const [items, setItems]   = useState([]);
+  const [items, setItems]   = useState(loadCart);
   const [isOpen, setIsOpen] = useState(false);
+
+  // Persist cart to localStorage whenever it changes
+  useEffect(() => {
+    try { localStorage.setItem(CART_KEY, JSON.stringify(items)); } catch { /* private mode */ }
+  }, [items]);
 
   const addItem = useCallback((product) => {
     setItems((prev) => {
