@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { assetUrl } from '../../utils/assetUrl';
 import { FiPackage, FiScissors, FiHeart } from 'react-icons/fi';
 import useReveal from '../../hooks/useReveal';
 import { SITE_CONFIG } from '../../data/siteConfig';
@@ -34,7 +35,7 @@ export default function About() {
         <div className="about-hero__image-wrap">
           <img
             className="about-hero__image"
-            src="/images/about-hero.jpg"
+            src={assetUrl('/images/about-hero.jpg')}
             alt="Artisan hands crocheting a bag from recycled T-shirt yarn"
             onError={(e) => { e.currentTarget.style.opacity = 0; }}
           />
@@ -80,7 +81,7 @@ export default function About() {
             <div className="about-studio__image-wrap">
               <img
                 className="about-studio__image"
-                src="/images/about-craft.jpg"
+                src={assetUrl('/images/about-craft.jpg')}
                 alt="Close-up of crochet work in progress"
                 onError={(e) => { e.currentTarget.style.opacity = 0; }}
               />
@@ -204,7 +205,7 @@ export default function About() {
             <div className="about-founder__image-wrap">
               <img
                 className="about-founder__image"
-                src="/images/founder.jpg"
+                src={assetUrl('/images/founder.jpg')}
                 alt="Whebuma Maigari, founder of The Stitch Bloom"
                 onError={(e) => { e.currentTarget.style.opacity = 0; }}
               />

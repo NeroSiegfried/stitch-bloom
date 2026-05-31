@@ -3,6 +3,7 @@ import { NavLink, Link, useLocation } from 'react-router-dom';
 import { FiShoppingBag, FiSearch, FiX } from 'react-icons/fi';
 import { useCart } from '../../context/CartContext';
 import { getAllProducts } from '../../data/products';
+import { assetUrl } from '../../utils/assetUrl';
 import './Navbar.css';
 
 const SHOP_LINKS = [
@@ -90,7 +91,7 @@ export default function Navbar() {
         <Link to="/" className="navbar__cell navbar__logo-cell" onClick={close} aria-label="The Stitch Bloom">
           {/* Small screen SVG logo */}
           <img
-            src="/images/logo.svg"
+            src={assetUrl('/images/logo.svg')}
             alt="The Stitch Bloom"
             className="navbar__logo-img"
             onError={(e) => {

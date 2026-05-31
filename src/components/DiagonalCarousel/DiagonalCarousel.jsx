@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useLayoutEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { assetUrl } from '../../utils/assetUrl';
 import './DiagonalCarousel.css';
 
 /* M&S-style straight arrow: path M5 12h14M12 5l7 7-7 7, rotated 180deg for prev */
@@ -154,7 +155,7 @@ export default function DiagonalCarousel({ items, compact = false, spread = fals
                     alt={item.name}
                     className="dc__card-image"
                     style={{ objectPosition: item.imageFocalPoints?.[0] ?? 'center' }}
-                    onError={(e) => { e.target.src = '/images/products/placeholder.svg'; }}
+                    onError={(e) => { e.target.src = assetUrl('/images/products/placeholder.svg'); }}
                   />
                 </Link>
               ) : (
@@ -163,7 +164,7 @@ export default function DiagonalCarousel({ items, compact = false, spread = fals
                   alt={item.name}
                   className="dc__card-image"
                   style={{ objectPosition: item.imageFocalPoints?.[0] ?? 'center' }}
-                  onError={(e) => { e.target.src = '/images/products/placeholder.svg'; }}
+                  onError={(e) => { e.target.src = assetUrl('/images/products/placeholder.svg'); }}
                 />
               )}
               {item.badge && <span className="dc__card-badge">{item.badge}</span>}

@@ -16,7 +16,8 @@
 
 import catalogData from './products.json';
 
-const IMG_BASE = '/images/products/';
+// Works both locally (base='/') and on GitHub Pages (base='/stitch-bloom/')
+const IMG_BASE = `${import.meta.env.BASE_URL}images/products/`;
 const IMG_EXT  = '.jpeg';
 
 /** Build a sequential image array from a prefix and count. */

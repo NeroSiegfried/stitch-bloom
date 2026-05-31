@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { FiRefreshCw, FiUsers, FiFeather } from 'react-icons/fi';
 import { getBestsellers, getAllProducts } from '../../data/products';
+import { assetUrl } from '../../utils/assetUrl';
 import ProductCard from '../../components/ProductCard/ProductCard';
 import DiagonalCarousel from '../../components/DiagonalCarousel/DiagonalCarousel';
 import useReveal from '../../hooks/useReveal';
@@ -18,21 +19,21 @@ const CATEGORIES = [
     label: 'Najma Collection',
     sub: 'Crochet bags',
     href: '/shop#najma',
-    image: '/images/products/najma-tote-1.jpeg',
+    image: assetUrl('/images/products/najma-tote-1.jpeg'),
   },
   {
     id: 'gadget-sleeves',
     label: 'Gadget Sleeves',
     sub: 'Tech protection',
     href: '/shop#gadget-sleeves',
-    image: '/images/products/sleeve-laptop-1.jpeg',
+    image: assetUrl('/images/products/sleeve-laptop-1.jpeg'),
   },
   {
     id: 'accessories',
     label: 'Accessories',
     sub: 'The details',
     href: '/shop#accessories',
-    image: '/images/products/key-holder-1.jpeg',
+    image: assetUrl('/images/products/key-holder-1.jpeg'),
   },
 ];
 
@@ -89,7 +90,7 @@ export default function Home() {
               loop
               muted
               playsInline
-              src="/images/hero-video.mp4"
+              src={assetUrl('/images/hero-video.mp4')}
             />
             <div className="home-feature__overlay" aria-hidden="true" />
 
@@ -216,7 +217,7 @@ export default function Home() {
         <div className="home-brand-strip__image-side">
           <img
             className="home-brand-strip__image"
-            src="/images/brand-story.jpg"
+            src={assetUrl('/images/brand-story.jpg')}
             alt="Artisan crocheting a bag from recycled yarn"
             onError={(e) => { e.currentTarget.style.display = 'none'; }}
           />

@@ -1,5 +1,6 @@
 import { useCart } from '../../context/CartContext';
 import { formatPrice } from '../../data/products';
+import { assetUrl } from '../../utils/assetUrl';
 import { FiX, FiMinus, FiPlus, FiShoppingBag } from 'react-icons/fi';
 import './CartDrawer.css';
 
@@ -73,7 +74,7 @@ export default function CartDrawer() {
                         src={thumb}
                         alt={item.name}
                         className="cart-item__image"
-                        onError={(e) => { e.target.src = '/images/products/placeholder.svg'; }}
+                        onError={(e) => { e.target.src = assetUrl('/images/products/placeholder.svg'); }}
                       />
                     </div>
                     <div className="cart-item__info">

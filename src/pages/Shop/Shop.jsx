@@ -4,6 +4,7 @@ import { FiShoppingBag } from 'react-icons/fi';
 import { SITE_CONFIG } from '../../data/siteConfig';
 import { useCart } from '../../context/CartContext';
 import { collections, getAllProducts, formatPrice } from '../../data/products';
+import { assetUrl } from '../../utils/assetUrl';
 import useReveal from '../../hooks/useReveal';
 import '../../styles/buttons.css';
 import './Shop.css';
@@ -86,7 +87,7 @@ function FeaturedCarousel({ products }) {
                 alt={product.name}
                 className="fc__image"
                 style={{ objectPosition: heroFocalPoint }}
-                onError={(e) => { e.target.src = '/images/products/placeholder.svg'; }}
+                onError={(e) => { e.target.src = assetUrl('/images/products/placeholder.svg'); }}
               />
             </div>
           </Link>
@@ -180,7 +181,7 @@ function FeaturedCarousel({ products }) {
                       src={v.images[0]}
                       alt={v.label}
                       className="fc__variant-thumb"
-                      onError={(e) => { e.target.src = '/images/products/placeholder.svg'; }}
+                      onError={(e) => { e.target.src = assetUrl('/images/products/placeholder.svg'); }}
                     />
                     <span className="fc__variant-label">{v.label}</span>
                   </button>
@@ -220,7 +221,7 @@ function ShopCard({ product }) {
             className="sc__image"
             loading="lazy"
             style={{ objectPosition: focalPoint }}
-            onError={(e) => { e.target.src = '/images/products/placeholder.svg'; }}
+            onError={(e) => { e.target.src = assetUrl('/images/products/placeholder.svg'); }}
           />
           <div className="sc__overlay" aria-hidden="true">
             <span className="sc__overlay-label">View Product</span>

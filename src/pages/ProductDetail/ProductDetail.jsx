@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { FiShoppingBag, FiMail } from 'react-icons/fi';
 import { useCart } from '../../context/CartContext';
 import { getAllProducts, formatPrice } from '../../data/products';
+import { assetUrl } from '../../utils/assetUrl';
 import { SITE_CONFIG } from '../../data/siteConfig';
 import '../../styles/buttons.css';
 import './ProductDetail.css';
@@ -53,7 +54,7 @@ export default function ProductDetail() {
     ? (product.colorVariants[activeVariant]?.images?.length
         ? product.colorVariants[activeVariant].images
         : product.images)
-    : (product.images?.length ? product.images : ['/images/placeholder.jpg']);
+    : (product.images?.length ? product.images : [assetUrl('/images/placeholder.jpg')]);
 
   // Focal points for the displayed image set
   const displayFocalPoints = hasVariants
