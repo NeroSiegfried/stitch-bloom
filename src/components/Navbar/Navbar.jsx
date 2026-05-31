@@ -91,7 +91,7 @@ export default function Navbar() {
         <Link to="/" className="navbar__cell navbar__logo-cell" onClick={close} aria-label="The Stitch Bloom">
           {/* Small screen SVG logo */}
           <img
-            src={assetUrl('/images/logo.svg')}
+            src={assetUrl('/images/Logo.svg')}
             alt="The Stitch Bloom"
             className="navbar__logo-img"
             onError={(e) => {

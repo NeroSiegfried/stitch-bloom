@@ -5,7 +5,7 @@
 /* ── Hero + feature carousel (integrated like M&S) ── */
 .home-feature {
   background-color: var(--color-cream);
-  padding: 0 0 var(--space-section);
+  padding: 0;
 }
 
 .home-feature__shell {
@@ -26,7 +26,7 @@
   width: min(calc(100% - (var(--edge-gap) * 2)), var(--max-width));
   min-height: inherit;
   margin-inline: auto;
-  padding: calc(var(--nav-height) + 28px) 0 42px;
+  padding: calc(var(--nav-height) + 28px) 0 64px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -663,9 +663,9 @@
   }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 780px) {
   .home-feature {
-    padding-bottom: 60px;
+    padding-bottom: 0;
   }
 
   .home-feature__shell {
@@ -678,10 +678,10 @@
 
   .home-feature__stage {
     width: 100%;
-    padding: calc(var(--nav-height) + 24px) var(--edge-gap) 28px;
+    padding: calc(var(--nav-height) + 24px) var(--edge-gap) 16px;
     display: flex;
     flex-direction: column;
-    gap: 18px;
+    gap: 16px;
     align-items: stretch;
   }
 
