@@ -2,8 +2,22 @@
    STITCH BLOOM — Global Styles
    ============================================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Inter:wght@300;400;500;600&display=swap');
 @import './variables.css';
+
+/*
+  Metric-adjusted fallback for Cormorant Garamond.
+  size-adjust, ascent-override etc. make the fallback font occupy the
+  same space as the web font, so no layout shift occurs when it loads.
+  Values tuned to Cormorant Garamond 400 at 16px.
+*/
+@font-face {
+  font-family: 'Cormorant Garamond Fallback';
+  src: local('Georgia'), local('Times New Roman');
+  size-adjust: 115%;
+  ascent-override: 88%;
+  descent-override: 22%;
+  line-gap-override: 0%;
+}
 
 /* ── Reset ── */
 *,

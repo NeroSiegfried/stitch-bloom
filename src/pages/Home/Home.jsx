@@ -99,30 +99,54 @@ export default function Home() {
     const supportEl = supportRef.current;
     if (!stageEl || !setEl) return;
 
-    /* ── Mobile: position carousel absolutely via JS measurement ── */
-    const isMobile = window.innerWidth <= 780;
-    if (isMobile && carouselEl && supportEl && carouselLayout.stageH > 0) {
-      const { yStep, cardTop, cardH } = carouselLayout;
-      const stageTop = stageEl.getBoundingClientRect().top;
-      const supportBottom = supportEl.getBoundingClientRect().bottom;
-      /* Visual top of adjacent-up card (w=+1) within carousel coordinate space:
-         CSS top = cardTop, translateY = -yStep, scale = 0.85 from card center.
-         Visual top = cardTop - yStep + cardH*(1-0.85)/2
-         We want this visual top to align with supportBottom + 16px gap (from stage top).
-         So: carouselTop = supportBottom - stageTop + 16 - adjacentCardVisualTop */
-      const adjacentCardVisualTop = cardTop - yStep + cardH * (1 - 0.85) / 2;
-      const carouselTop = Math.round(supportBottom - stageTop + 16 - adjacentCardVisualTop);
-      carouselEl.style.top = `${carouselTop}px`;
-    } else if (carouselEl) {
-      carouselEl.style.top = '';
-    }
+    /* Helper to measure static layout offsets, ignoring CSS transform translations
+       (like the .reveal fade-up animation) which skew getBoundingClientRect() during SPA navigation */
+    const getStaticOffset = (el, parent) => {
+      let top = 0;
+      let p = el;
+      while (p && p !== parent && p !== document.body) {
+        top += p.offsetTop;
+        p = p.offsetParent;
+      }
+      return { top, bottom: top + el.offsetHeight };
+    };
 
-    /* ── Stage minHeight: grow hero to fit carousel-set bottom + 16px ── */
-    /* getBoundingClientRect forces reflow so carousel position above is reflected */
-    const stageTop = stageEl.getBoundingClientRect().top;
-    const setBottom = setEl.getBoundingClientRect().bottom;
-    const needed = Math.ceil(setBottom - stageTop + 16);
-    setStageMinH((prev) => (prev === needed ? prev : needed));
+    /* Run measurements only after all fonts are loaded so Cormorant Garamond
+       metrics are used from the start — eliminates FOUT layout shift */
+    const run = () => {
+      /* ── Mobile: position carousel absolutely via JS measurement ── */
+      const isMobile = window.innerWidth <= 780;
+      if (isMobile && carouselEl && supportEl && carouselLayout.stageH > 0) {
+        const { yStep, cardTop, cardH } = carouselLayout;
+        const supportBottom = getStaticOffset(supportEl, stageEl).bottom;
+        
+        /* Visual top of adjacent-up card (w=+1) within carousel coordinate space:
+           CSS top = cardTop, translateY = -yStep, scale = 0.85 from card center.
+           Visual top = cardTop - yStep + cardH*(1-0.85)/2
+           We want this visual top to align with supportBottom + 16px gap (from stage top).
+           So: carouselTop = supportBottom + 16 - adjacentCardVisualTop */
+        const adjacentCardVisualTop = cardTop - yStep + cardH * (1 - 0.85) / 2;
+        const carouselTop = Math.round(supportBottom + 16 - adjacentCardVisualTop);
+        carouselEl.style.top = `${carouselTop}px`;
+      } else if (carouselEl) {
+        carouselEl.style.top = '';
+      }
+
+      /* ── Stage minHeight: grow hero to fit carousel-set bottom + 16px ── */
+      /* Use getStaticOffset so the measurement ignores in-progress CSS transforms */
+      const needed = Math.ceil(getStaticOffset(setEl, stageEl).bottom + 16);
+      setStageMinH((prev) => (prev === needed ? prev : needed));
+    };
+
+    /* Wait for fonts before measuring so heading metrics are stable,
+       then defer one rAF so carousel cards are fully painted —
+       this covers both hard refresh (fonts loading) and SPA navigation (fonts cached) */
+    const measure = () => requestAnimationFrame(run);
+    if (document.fonts && document.fonts.status !== 'loaded') {
+      document.fonts.ready.then(measure);
+    } else {
+      measure();
+    }
   }, [carouselLayout]);
   return (
     <main className="page-enter" ref={revealRef}>

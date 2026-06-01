@@ -21,7 +21,7 @@
   --color-border:       #DDD3C7;
 
   /* ── Typography ── */
-  --font-heading: 'Cormorant Garamond', 'Georgia', serif;
+  --font-heading: 'Cormorant Garamond', 'Cormorant Garamond Fallback', 'Georgia', serif;
   --font-body:    'Inter', 'Helvetica Neue', Arial, sans-serif;
 
   --size-xs:   0.75rem;   /* 12px */
@@ -74,4 +74,19 @@
   --radius-lg:  16px;
   --radius-xl:  24px;
   --radius-full: 9999px;
+}
+
+/* ── Mobile spacing overrides — everything resolves to 32px or 16px max ── */
+@media (max-width: 780px) {
+  :root {
+    --space-lg:            2rem;    /* 32px  (was 40px) */
+    --space-xl:            2rem;    /* 32px  (was 64px) */
+    --space-2xl:           2rem;    /* 32px  (was 96px) */
+    --space-3xl:           2rem;    /* 32px  (was 144px) */
+    --space-section:       2rem;    /* 32px  (was clamp 64–96px) */
+    --space-section-tight: 1rem;    /* 16px  (was clamp 40–64px) */
+    --space-page-top:      calc(var(--nav-height) + 1.5rem); /* nav + 24px */
+    --space-page-bottom:   2rem;    /* 32px  (was clamp 48–76px) */
+    --space-panel:         1rem;    /* 16px  (was clamp 24–40px) */
+  }
 }
