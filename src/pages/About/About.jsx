@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { assetUrl } from '../../utils/assetUrl';
 import { FiPackage, FiScissors, FiHeart } from 'react-icons/fi';
 import useReveal from '../../hooks/useReveal';
+import usePageMeta from '../../hooks/usePageMeta';
 import { SITE_CONFIG } from '../../data/siteConfig';
 import '../../styles/buttons.css';
 import './About.css';
@@ -26,6 +27,12 @@ const STATS = [
 
 export default function About() {
   const revealRef = useReveal();
+
+  usePageMeta({
+    title: 'Our Story',
+    description: 'Learn about The Stitch Bloom — a sustainable fashion brand handcrafting crochet bags from recycled textiles and empowering women in Nigeria.',
+    path: '/about',
+  });
 
   return (
     <main className="page-enter" ref={revealRef}>

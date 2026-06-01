@@ -7,6 +7,8 @@
 export const SITE_CONFIG = {
   brandName: 'The Stitch Bloom',
   tagline: 'Turning waste into worth',
+  siteUrl: 'https://thestitchbloom.com',
+  defaultDescription: 'The Stitch Bloom — handcrafted crochet bags made from 100% recycled T-shirt yarn. Crafted slowly, designed intentionally.',
 
   email: 'thestitchbloom@yahoo.com',
   phone: '+2348037988580',

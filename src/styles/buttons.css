@@ -193,6 +193,42 @@
   color: var(--color-cream);
 }
 
+/* ── Back variant — icon on left, no fill on hover, horizontal arrow ── */
+.btn-split--back .btn-split__icon {
+  border-right: none;
+  color: var(--color-brown-deep);
+}
+
+.btn-split--back .btn-split__label {
+  border-right: 1px solid currentColor;
+  color: var(--color-brown-deep);
+}
+
+.btn-split--back:hover .btn-split__label,
+.btn-split--back:hover .btn-split__icon {
+  background-color: transparent;
+  color: var(--color-brown-deep);
+}
+
+/* Arrow slides left (←): exit left, enter from right.
+   Offset must exceed the 50px cell radius — use 60px to guarantee
+   arrow 2 is fully clipped by overflow:hidden at rest. */
+.btn-split--back .btn-split__arrow--1 {
+  transform: translate(0, 0);          /* centre — visible */
+}
+
+.btn-split--back .btn-split__arrow--2 {
+  transform: translate(60px, 0);       /* right of cell — hidden */
+}
+
+.btn-split--back:hover .btn-split__arrow--1 {
+  transform: translate(-60px, 0);      /* exit left */
+}
+
+.btn-split--back:hover .btn-split__arrow--2 {
+  transform: translate(0, 0);          /* enter from right */
+}
+
 /* ── Light variant — on dark backgrounds ── */
 .btn-split--light .btn-split__label,
 .btn-split--light .btn-split__icon {

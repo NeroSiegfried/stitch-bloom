@@ -5,6 +5,7 @@ import { useCart } from '../../context/CartContext';
 import { getAllProducts, formatPrice } from '../../data/products';
 import { assetUrl } from '../../utils/assetUrl';
 import { SITE_CONFIG } from '../../data/siteConfig';
+import usePageMeta from '../../hooks/usePageMeta';
 import '../../styles/buttons.css';
 import './ProductDetail.css';
 
@@ -20,6 +21,18 @@ function ArrowDiag() {
   );
 }
 
+/* ── Left arrow ── */
+function ArrowLeft() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none"
+      stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
+      aria-hidden="true">
+      <line x1="12" y1="7" x2="2" y2="7" />
+      <polyline points="6,3 2,7 6,11" />
+    </svg>
+  );
+}
+
 export default function ProductDetail() {
   const { id } = useParams();
   const { addItem } = useCart();
@@ -28,6 +41,21 @@ export default function ProductDetail() {
   const [added, setAdded] = useState(false);
 
   const product = getAllProducts().find((p) => p.id === id);
+
+  // Determine display image for OG before conditional return
+  const ogImage = product
+    ? (product.colorVariants?.[0]?.images?.[0] ?? product.images?.[0] ?? `${SITE_CONFIG.siteUrl}/images/og-default.jpg`)
+    : `${SITE_CONFIG.siteUrl}/images/og-default.jpg`;
+
+  usePageMeta({
+    title: product ? `${product.name} — ${product.collectionName}` : 'Product Not Found',
+    description: product
+      ? (product.description ?? `${product.name} — handcrafted from 100% recycled T-shirt yarn by The Stitch Bloom.`)
+      : 'This product could not be found.',
+    image: ogImage.startsWith('http') ? ogImage : `${SITE_CONFIG.siteUrl}${ogImage}`,
+    path: `/shop/${id}`,
+    type: 'product',
+  });
 
   if (!product) {
     return (
@@ -83,7 +111,15 @@ export default function ProductDetail() {
       {/* ── Product layout ── */}
       <section className="pd-layout">
         {/* Back link — spans full grid width */}
-        <Link to="/shop" className="pd-back">← Shop All</Link>
+        <div className="pd-back">
+          <Link to="/shop" className="btn-split btn-split--back">
+            <span className="btn-split__icon">
+              <span className="btn-split__arrow btn-split__arrow--1"><ArrowLeft /></span>
+              <span className="btn-split__arrow btn-split__arrow--2"><ArrowLeft /></span>
+            </span>
+            <span className="btn-split__label">Shop All</span>
+          </Link>
+        </div>
         {/* Gallery */}
         <div className="pd-gallery">
           <div className="pd-gallery__main">

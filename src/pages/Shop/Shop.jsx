@@ -6,6 +6,7 @@ import { useCart } from '../../context/CartContext';
 import { collections, getAllProducts, formatPrice } from '../../data/products';
 import { assetUrl } from '../../utils/assetUrl';
 import useReveal from '../../hooks/useReveal';
+import usePageMeta from '../../hooks/usePageMeta';
 import '../../styles/buttons.css';
 import './Shop.css';
 
@@ -258,6 +259,12 @@ export default function Shop() {
   const location = useLocation();
   const [activeFilter, setActiveFilter] = useState(ALL_FILTER);
   const revealRef = useReveal();
+
+  usePageMeta({
+    title: 'Shop the Collection',
+    description: 'Browse our full range of handcrafted crochet bags — each piece made from recycled T-shirt yarn and finished by hand in Abuja, Nigeria.',
+    path: '/shop',
+  });
 
   useEffect(() => {
     if (location.hash) {

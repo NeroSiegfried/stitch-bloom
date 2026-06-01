@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { FiInstagram } from 'react-icons/fi';
 import { SITE_CONFIG } from '../../data/siteConfig';
+import usePageMeta from '../../hooks/usePageMeta';
 import '../../styles/buttons.css';
 import './Contact.css';
 
@@ -27,6 +28,13 @@ const ENQUIRY_TOPICS = [
 
 export default function Contact() {
   const [submitted, setSubmitted] = useState(false);
+
+  usePageMeta({
+    title: 'Contact Us',
+    description: 'Get in touch with The Stitch Bloom — place a custom order, ask a question, or simply say hello.',
+    path: '/contact',
+  });
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',

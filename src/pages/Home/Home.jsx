@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback, useRef, useLayoutEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FiRefreshCw, FiUsers, FiFeather } from 'react-icons/fi';
 import { getBestsellers, getAllProducts } from '../../data/products';
@@ -6,6 +6,7 @@ import { assetUrl } from '../../utils/assetUrl';
 import ProductCard from '../../components/ProductCard/ProductCard';
 import DiagonalCarousel from '../../components/DiagonalCarousel/DiagonalCarousel';
 import useReveal from '../../hooks/useReveal';
+import usePageMeta from '../../hooks/usePageMeta';
 import '../../styles/buttons.css';
 import './Home.css';
 
@@ -75,8 +76,54 @@ function ArrowDiag() {
 
 export default function Home() {
   const revealRef = useReveal();
+  usePageMeta({
+    title: 'Turning Waste Into Worth',
+    description: 'Handcrafted crochet bags made from 100% recycled T-shirt yarn. Crafted slowly, designed intentionally.',
+    path: '/',
+  });
   const [activeCarouselIdx, setActiveCarouselIdx] = useState(0);
   const activeProduct = carouselItems[activeCarouselIdx] ?? carouselItems[0];
+  const [carouselLayout, setCarouselLayout] = useState({ controlsBottom: 0, lowerCardBottom: 0, stageH: 0 });
+  const handleCarouselLayout = useCallback((layout) => setCarouselLayout(layout), []);
+  const stageRef = useRef(null);
+  const carouselSetRef = useRef(null);
+  const contentRef = useRef(null);
+  const supportRef = useRef(null);
+  const carouselRef = useRef(null);
+  const [stageMinH, setStageMinH] = useState(null);
+
+  useLayoutEffect(() => {
+    const stageEl = stageRef.current;
+    const setEl = carouselSetRef.current;
+    const carouselEl = carouselRef.current;
+    const supportEl = supportRef.current;
+    if (!stageEl || !setEl) return;
+
+    /* ── Mobile: position carousel absolutely via JS measurement ── */
+    const isMobile = window.innerWidth <= 780;
+    if (isMobile && carouselEl && supportEl && carouselLayout.stageH > 0) {
+      const { yStep, cardTop, cardH } = carouselLayout;
+      const stageTop = stageEl.getBoundingClientRect().top;
+      const supportBottom = supportEl.getBoundingClientRect().bottom;
+      /* Visual top of adjacent-up card (w=+1) within carousel coordinate space:
+         CSS top = cardTop, translateY = -yStep, scale = 0.85 from card center.
+         Visual top = cardTop - yStep + cardH*(1-0.85)/2
+         We want this visual top to align with supportBottom + 16px gap (from stage top).
+         So: carouselTop = supportBottom - stageTop + 16 - adjacentCardVisualTop */
+      const adjacentCardVisualTop = cardTop - yStep + cardH * (1 - 0.85) / 2;
+      const carouselTop = Math.round(supportBottom - stageTop + 16 - adjacentCardVisualTop);
+      carouselEl.style.top = `${carouselTop}px`;
+    } else if (carouselEl) {
+      carouselEl.style.top = '';
+    }
+
+    /* ── Stage minHeight: grow hero to fit carousel-set bottom + 16px ── */
+    /* getBoundingClientRect forces reflow so carousel position above is reflected */
+    const stageTop = stageEl.getBoundingClientRect().top;
+    const setBottom = setEl.getBoundingClientRect().bottom;
+    const needed = Math.ceil(setBottom - stageTop + 16);
+    setStageMinH((prev) => (prev === needed ? prev : needed));
+  }, [carouselLayout]);
   return (
     <main className="page-enter" ref={revealRef}>
 
@@ -94,8 +141,8 @@ export default function Home() {
             />
             <div className="home-feature__overlay" aria-hidden="true" />
 
-            <div className="home-feature__stage">
-              <div className="home-feature__content">
+            <div className="home-feature__stage" ref={stageRef} style={stageMinH ? { minHeight: stageMinH } : undefined}>
+              <div className="home-feature__content" ref={contentRef}>
                 <p className="home-feature__eyebrow reveal">New Arrivals</p>
                 <h1 className="home-feature__headline reveal">
                   Built for the journey.
@@ -105,36 +152,53 @@ export default function Home() {
                 </p>
               </div>
 
-              <p className="home-feature__support home-feature__support--right reveal">
+              <p className="home-feature__support home-feature__support--right reveal" ref={supportRef}>
                 Crafted slowly. Designed intentionally. Finished for everyday use.
               </p>
 
-              <div className="home-feature__carousel reveal">
-                <DiagonalCarousel items={carouselItems} spread onActiveChange={setActiveCarouselIdx} />
-              </div>
+              <div
+                ref={carouselRef}
+                className="home-feature__carousel reveal"
+                style={carouselLayout.largeAnchor > 0 ? {
+                  '--dc-large-anchor': `${carouselLayout.largeAnchor}px`,
+                  '--dc-controls-bottom': `${carouselLayout.controlsBottom}px`,
+                  '--dc-stage-h': `${carouselLayout.stageH}px`,
+                } : undefined}
+              >
+                <DiagonalCarousel
+                  items={carouselItems}
+                  spread
+                  onActiveChange={setActiveCarouselIdx}
+                  onLayoutChange={handleCarouselLayout}
+                />
 
-              <div className="home-feature__actions reveal">
-                <Link to="/shop" className="btn-split btn-split--light">
-                  <span className="btn-split__label">SHOP ALL</span>
-                  <span className="btn-split__icon">
-                    <span className="btn-split__arrow btn-split__arrow--1"><ArrowDiag /></span>
-                    <span className="btn-split__arrow btn-split__arrow--2"><ArrowDiag /></span>
-                  </span>
-                </Link>
-              </div>
+                {/* ── Overlay set: info (left) + shop-all (right), bottoms aligned ── */}
+                <div className="home-carousel-set" ref={carouselSetRef}>
+                  {/* Portrait order 1: carousel item description */}
+                  <div className="home-carousel-info reveal">
+                    <p className="home-carousel-info__name">{activeProduct.name}</p>
+                    <p className="home-carousel-info__desc">{activeProduct.description}</p>
+                    <Link
+                      to={`/shop/${activeProduct.id}`}
+                      className="home-carousel-info__arrow"
+                      aria-label={`View ${activeProduct.name}`}
+                    >
+                      <span className="btn-split__arrow btn-split__arrow--1"><ArrowDiag /></span>
+                      <span className="btn-split__arrow btn-split__arrow--2"><ArrowDiag /></span>
+                    </Link>
+                  </div>
 
-              {/* ── Carousel product info — inside hero, bottom-left ── */}
-              <div className="home-carousel-info reveal">
-                <p className="home-carousel-info__name">{activeProduct.name}</p>
-                <p className="home-carousel-info__desc">{activeProduct.description}</p>
-                <Link
-                  to={`/shop/${activeProduct.id}`}
-                  className="home-carousel-info__arrow"
-                  aria-label={`View ${activeProduct.name}`}
-                >
-                  <span className="btn-split__arrow btn-split__arrow--1"><ArrowDiag /></span>
-                  <span className="btn-split__arrow btn-split__arrow--2"><ArrowDiag /></span>
-                </Link>
+                  {/* Portrait order 2: shop all button */}
+                  <div className="home-feature__actions reveal">
+                    <Link to="/shop" className="btn-split btn-split--light">
+                      <span className="btn-split__label">SHOP ALL</span>
+                      <span className="btn-split__icon">
+                        <span className="btn-split__arrow btn-split__arrow--1"><ArrowDiag /></span>
+                        <span className="btn-split__arrow btn-split__arrow--2"><ArrowDiag /></span>
+                      </span>
+                    </Link>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

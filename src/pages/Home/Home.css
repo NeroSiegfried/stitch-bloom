@@ -23,12 +23,13 @@
 .home-feature__stage {
   position: relative;
   z-index: 2;
-  width: min(calc(100% - (var(--edge-gap) * 2)), var(--max-width));
+  max-width: var(--max-width);
+  width: 100%;
   min-height: inherit;
   margin-inline: auto;
-  padding: calc(var(--nav-height) + 28px) 0 64px;
+  padding: var(--space-edge) 0;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
 }
 
@@ -50,8 +51,8 @@
 
 .home-feature__content {
   position: absolute;
-  top: calc(var(--nav-height) + 28px);
-  left: 0;
+  top: calc(var(--nav-height) + var(--space-edge));
+  left: var(--container-pad);
   z-index: 3;
   width: min(22rem, 24vw);
   max-width: 100%;
@@ -90,9 +91,9 @@
 }
 
 .home-feature__actions {
-  position: absolute;
-  right: 0;
-  bottom: 40px;
+  position: relative;
+  right: auto;
+  bottom: auto;
   z-index: 3;
   display: flex;
   justify-content: flex-end;
@@ -102,6 +103,7 @@
   position: relative;
   width: min(1200px, 100%);
   margin-inline: auto;
+  margin-top: -51px;
   z-index: 3;
   /* Cards, buttons and links stay interactive; dead space around them does not
      block clicks on home-carousel-info below */
@@ -115,6 +117,25 @@
   pointer-events: auto;
 }
 
+/* ── Carousel overlay set: info (left) + shop-all (right) ── */
+.home-carousel-set {
+  /* Sit immediately after largeAnchor (max of lower-card-bottom and controls-bottom)
+     within the carousel container.
+     margin-top = largeAnchor - stageH pulls the set up from its natural in-flow
+     position (below dc__stage) to that anchor point from the carousel top. */
+  margin-top: calc(var(--dc-large-anchor, 0px) - var(--dc-stage-h, 0px));
+  position: relative;
+  z-index: 5;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-lg);
+  width: 100%;
+  padding: 0 0 var(--space-edge);
+  pointer-events: auto;
+}
+
 .home-feature__support {
   position: absolute;
   z-index: 3;
@@ -122,26 +143,25 @@
 }
 
 .home-feature__support--left {
-  left: 0;
+  left: var(--container-pad);
   bottom: 40px;
 }
 
 .home-feature__support--right {
-  right: 0;
-  top: calc(var(--nav-height) + 30px);
+  right: var(--container-pad);
+  top: calc(var(--nav-height) + var(--space-edge));
   text-align: right;
 }
 
-/* ── Carousel product info (inside hero overlay, bottom-left) ── */
+/* ── Carousel product info (inside overlay set) ── */
 .home-carousel-info {
-  position: absolute;
-  bottom: 40px;
-  left: 0;
+  position: relative;
   z-index: 10;
   max-width: 22rem;
   display: flex;
   flex-direction: column;
   gap: 6px;
+  padding-top: var(--space-edge);
 }
 
 .home-carousel-info__name {
@@ -280,7 +300,7 @@
   position: absolute;
   inset: auto 0 0 0;
   height: 84px;
-  padding: 16px;
+  padding: var(--space-edge);
   display: flex;
   flex-direction: column;
   gap: 0;
@@ -416,7 +436,7 @@
 .home-bestsellers__grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 1rem;
+  gap: var(--space-sm);
   align-items: stretch;
   margin-bottom: var(--space-xl);
 }
@@ -542,7 +562,7 @@
 .home-pillars__grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 1rem;
+  gap: var(--space-sm);
 }
 .home-pillar {
   display: flex;
@@ -678,11 +698,12 @@
 
   .home-feature__stage {
     width: 100%;
-    padding: calc(var(--nav-height) + 24px) var(--edge-gap) 64px;
+    padding: calc(var(--nav-height) + var(--space-edge)) var(--container-pad) var(--space-edge);
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: var(--space-edge);
     align-items: stretch;
+    justify-content: flex-start;
   }
 
   .home-feature__content {
@@ -698,14 +719,14 @@
   }
 
   .home-feature__carousel {
-    position: relative;
-    inset: auto;
-    top: auto;
-    left: auto;
-    width: min(680px, 100%);
+    position: absolute;
+    left: 0;
+    right: 0;
+    width: 100%;
     transform: none;
-    margin-inline: auto;
-    order: 2;
+    margin-top: 0;
+    margin-inline: 0;
+    order: unset;
   }
 
   .home-feature__support,
@@ -722,25 +743,21 @@
     left: auto;
     z-index: auto;
     max-width: 100%;
-    order: 3;
   }
 
-  .home-feature__support--left {
-    bottom: auto;
-    left: auto;
-  }
-
-  .home-feature__support--right {
-    right: auto;
-    bottom: auto;
-    order: 5;
+  .home-carousel-set {
+    position: absolute;
+    top: var(--dc-controls-bottom, 498px);
+    left: var(--container-pad);
+    right: var(--container-pad);
+    margin-top: 0;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-sm);
   }
 
   .home-feature__actions {
-    bottom: auto;
-    right: auto;
     justify-content: flex-start;
-    order: 4;
   }
 
   .home-categories {
@@ -799,6 +816,6 @@
 
   .home-bestsellers__grid {
     grid-template-columns: 1fr 1fr;
-    gap: 1rem;
+    gap: var(--space-sm);
   }
 }

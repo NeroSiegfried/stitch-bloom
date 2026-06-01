@@ -31,10 +31,11 @@ function NavSvg({ rotate }) {
  *   compact — hide dots
  *   spread  — use measured container width for responsive sizing
  */
-export default function DiagonalCarousel({ items, compact = false, spread = false, onActiveChange }) {
+export default function DiagonalCarousel({ items, compact = false, spread = false, onActiveChange, onLayoutChange }) {
   const [active, setActive] = useState(0);
   const timerRef = useRef(null);
   const containerRef = useRef(null);
+  const controlsRef = useRef(null);
   const [cw, setCw] = useState(0);
 
   useLayoutEffect(() => {
@@ -92,6 +93,21 @@ export default function DiagonalCarousel({ items, compact = false, spread = fals
   const stageH = cardH + yStep * visibleSide * 2 + 72; /* 72px reserved for controls */
   const cardLeft = cw > 0 ? Math.round((cw - cardW) / 2) : 0;
   const cardTop  = Math.round(yStep * visibleSide); /* centre card vertically in stage */
+
+  /* Notify parent of layout geometry so it can position overlay elements */
+  useLayoutEffect(() => {
+    if (cw === 0 || !onLayoutChange) return;
+    const controlsH = controlsRef.current ? controlsRef.current.offsetHeight : 50;
+    const controlsTop = cardTop + cardH;
+    const controlsBottom = controlsTop + controlsH;
+    /* Lower-adjacent card is at w = -1: translateY(+yStep), scale(0.85)
+       Visual bottom = cardTop + yStep + cardH * 0.925 (scale from card center) */
+    const lowerCardBottom = cardTop + yStep + Math.round(cardH * 0.925);
+    /* Large-screen anchor: whichever is lower — the lower card's bottom or the
+       controls bottom. Ensures the overlay set never overlaps the nav buttons. */
+    const largeAnchor = Math.max(lowerCardBottom, controlsBottom);
+    onLayoutChange({ controlsBottom, lowerCardBottom, largeAnchor, controlsTop, stageH, yStep, cardTop, cardH });
+  }, [cw, cardTop, cardH, yStep, onLayoutChange]);
 
   return (
     <div className="dc" ref={containerRef} aria-label="Product carousel" role="region">
@@ -174,8 +190,9 @@ export default function DiagonalCarousel({ items, compact = false, spread = fals
 
         {/* Controls: prev / dots / next — absolutely positioned 16px below the center card */}
         <div
+          ref={controlsRef}
           className="dc__controls"
-          style={cw > 0 ? { position: 'absolute', top: cardTop + cardH + 16, left: 0, right: 0, zIndex: items.length + 2 } : undefined}
+          style={cw > 0 ? { position: 'absolute', top: cardTop + cardH, left: 0, right: 0, zIndex: items.length + 2 } : undefined}
         >
           <button className="dc__nav-btn dc__nav-btn--left" onClick={prev} aria-label="Previous product">
             <span className="dc__nav-arrow dc__nav-arrow--1"><NavSvg rotate /></span>
