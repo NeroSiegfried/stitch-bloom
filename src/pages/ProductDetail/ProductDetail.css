@@ -153,6 +153,15 @@
   font-size: var(--size-xs);
   color: var(--color-text-muted);
   letter-spacing: 0.04em;
+  /* Keep every swatch the same column width so long colourway names
+     (e.g. "Burgundy & Blue") wrap instead of stretching the row */
+  max-width: 84px;
+  text-align: center;
+}
+
+.pd-info__variant-thumb-wrap {
+  position: relative;
+  display: block;
 }
 
 .pd-info__variant-btn img {
@@ -161,6 +170,22 @@
   object-fit: cover;
   object-position: center;
   display: block;
+}
+
+/* "New" chip on a single colourway swatch */
+.pd-info__variant-badge {
+  position: absolute;
+  top: 0;
+  left: 0;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  background-color: var(--color-terracotta);
+  color: var(--color-white);
+  padding: 2px 5px;
+  line-height: 1.2;
+  pointer-events: none;
 }
 
 .pd-info__variant-btn--active {

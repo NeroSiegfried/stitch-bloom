@@ -12,6 +12,11 @@ dist
 dist-ssr
 *.local
 
+# Raw photo drops from Drive — source images are renamed into
+# /public/images/products/ and committed from there instead
+drive-download-*/
+drive-download-*.zip
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

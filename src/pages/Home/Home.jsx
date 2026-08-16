@@ -11,8 +11,11 @@ import '../../styles/buttons.css';
 import './Home.css';
 
 const bestsellers = getBestsellers();
-/* Use all Najma products (up to 5) for the hero carousel */
-const carouselItems = getAllProducts().filter((p) => p.collectionId === 'najma').slice(0, 5);
+/* Hero carousel: the bags — the Najma line plus any standalone pieces */
+const BAG_COLLECTIONS = ['najma', 'signature'];
+const carouselItems = getAllProducts()
+  .filter((p) => BAG_COLLECTIONS.includes(p.collectionId))
+  .slice(0, 6);
 
 const CATEGORIES = [
   {

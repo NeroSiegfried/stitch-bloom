@@ -178,12 +178,17 @@ function FeaturedCarousel({ products }) {
                     onClick={() => setActiveVariant(j)}
                     aria-pressed={j === activeVariant}
                   >
-                    <img
-                      src={v.images[0]}
-                      alt={v.label}
-                      className="fc__variant-thumb"
-                      onError={(e) => { e.target.src = assetUrl('/images/products/placeholder.svg'); }}
-                    />
+                    <span className="fc__variant-thumb-wrap">
+                      <img
+                        src={v.images[0]}
+                        alt={v.label}
+                        className="fc__variant-thumb"
+                        onError={(e) => { e.target.src = assetUrl('/images/products/placeholder.svg'); }}
+                      />
+                      {v.badge && (
+                        <span className="fc__variant-badge">{v.badge}</span>
+                      )}
+                    </span>
                     <span className="fc__variant-label">{v.label}</span>
                   </button>
                 ))}

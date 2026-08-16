@@ -14,11 +14,15 @@ To add another shot of a product: drop the file in, bump `imageCount` in `produc
 | Product | Prefix | Count needed | Files | Status |
 |---|---|---|---|---|
 | Najma Tote Bag | `najma-tote` | 1 | `najma-tote-1.jpeg` | ✅ |
-| Najma Shoulder Bag | `najma-shoulder` | 2 | `najma-shoulder-1.jpeg`, `najma-shoulder-2.jpeg` | ✅ |
+| Najma Shoulder Bag – Burgundy & Blue | `najma-shoulder-burgundy-blue` | 3 | `najma-shoulder-burgundy-blue-1.jpeg` … `-3.jpeg` | ✅ 🆕 |
+| Najma Shoulder Bag – Pink & Rose | `najma-shoulder-pink` | 1 | `najma-shoulder-pink-1.jpeg` | ✅ |
+| Najma Shoulder Bag – Charcoal | `najma-shoulder-charcoal` | 1 | `najma-shoulder-charcoal-1.jpeg` | ✅ |
 | Najma Mini Bag | `najma-mini` | 1 | `najma-mini-1.jpeg` | ✅ |
 | Najma Handbag – Pink & Brown | `najma-handbag-pink` | 1 | `najma-handbag-pink-1.jpeg` | ✅ |
 | Najma Handbag – Black | `najma-handbag-black` | 1 | `najma-handbag-black-1.jpeg` | ✅ |
 | Najma Clutch | `najma-clutch` | 4 | `najma-clutch-1.jpeg` … `najma-clutch-4.jpeg` | ✅ |
+| Nwukabu Shoulder Bag – Red & Leopard Print | `nwukabu-shoulder-red` | 2 | `nwukabu-shoulder-red-1.jpeg`, `-2.jpeg` | ✅ 🆕 |
+| Nwukabu Shoulder Bag – Navy & Sky Blue | `nwukabu-shoulder-navy` | 3 | `nwukabu-shoulder-navy-1.jpeg` … `-3.jpeg` | ✅ 🆕 |
 | Key Holder | `key-holder` | 1 | `key-holder-1.jpeg` | ✅ |
 | iPad Sleeve | `sleeve-ipad` | 1 | `sleeve-ipad-1.jpeg` | ✅ |
 | Laptop Sleeve | `sleeve-laptop` | 2 | `sleeve-laptop-1.jpeg`, `sleeve-laptop-2.jpeg` | ✅ |

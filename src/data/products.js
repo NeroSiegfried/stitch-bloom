@@ -7,7 +7,9 @@
  *   imagePrefix  — filename stem, e.g. "najma-tote"
  *   imageCount   — how many sequential images exist (e.g. 2)
  *                  → generates /images/products/najma-tote-1.jpeg … -2.jpeg
- *   variants     — array of { label, imagePrefix, imageCount } for colourways
+ *   variants     — array of { label, imagePrefix, imageCount, badge? } for colourways.
+ *                  An optional `badge` (e.g. "New") flags a single colourway in the
+ *                  variant selectors without badging the whole product listing.
  *
  * To add a new image: drop the file into /public/images/products/ as
  * <prefix>-<n>.jpeg and bump imageCount in products.json.
@@ -31,6 +33,9 @@ function buildVariants(variants) {
   return (variants ?? []).map((v) => ({
     label: v.label,
     images: buildImages(v.imagePrefix, v.imageCount),
+    /* Optional per-colourway badge, e.g. "New" — rendered as a chip on the swatch */
+    badge: v.badge ?? null,
+    imageFocalPoints: v.imageFocalPoints ?? [],
   }));
 }
 
@@ -60,12 +65,19 @@ export function getAllProducts() {
 }
 
 /**
- * Returns bestseller products (badge === "Bestseller"), falling back
- * to the first 3 Najma products.
+ * Returns the products shown in the Home "Bestsellers" grid.
+ *
+ * Priority:
+ *   1. `bestseller: true` in products.json — explicit, and independent of
+ *      `badge`, so a piece can be a bestseller while still showing "New".
+ *   2. badge === "Bestseller" (legacy heuristic).
+ *   3. First 3 Najma products.
  */
 export function getBestsellers() {
-  const all     = getAllProducts();
-  const flagged = all.filter((p) => p.badge === 'Bestseller');
+  const all      = getAllProducts();
+  const selected = all.filter((p) => p.bestseller);
+  if (selected.length >= 3) return selected;
+  const flagged  = all.filter((p) => p.badge === 'Bestseller');
   if (flagged.length >= 3) return flagged;
   return all.filter((p) => p.collectionId === 'najma').slice(0, 3);
 }

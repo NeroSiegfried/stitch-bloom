@@ -171,8 +171,13 @@ export default function ProductDetail() {
                     onClick={() => handleVariantChange(i)}
                     aria-pressed={i === activeVariant}
                   >
-                    <img src={v.images[0]} alt={v.label}
-                      onError={(e) => { e.currentTarget.style.opacity = 0; }} />
+                    <span className="pd-info__variant-thumb-wrap">
+                      <img src={v.images[0]} alt={v.label}
+                        onError={(e) => { e.currentTarget.style.opacity = 0; }} />
+                      {v.badge && (
+                        <span className="pd-info__variant-badge">{v.badge}</span>
+                      )}
+                    </span>
                     <span>{v.label}</span>
                   </button>
                 ))}

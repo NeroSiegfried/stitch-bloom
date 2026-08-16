@@ -88,7 +88,8 @@
 .fc__stage {
   display: grid;
   grid-template-columns: 58% 1fr;
-  min-height: 560px;
+  /* Floor only — real height comes from .fc__image-block's fixed aspect ratio. */
+  min-height: 460px;
   border: 1px solid var(--color-border);
   transition: opacity 0.38s ease, transform 0.38s ease;
 }
@@ -103,15 +104,27 @@
   transform: translateX(-24px);
 }
 
-/* Image block */
+/* Image block.
+   Normalised to 3:4 — the *shortest* ratio in the catalogue — so the stage
+   height is identical on every slide and colourway. Photos already at 3:4 are
+   shown in full; taller 2:3 photos lose ~5.5% off the top and bottom, which is
+   empty backdrop, so the whole bag still reads. Set `align-self: start` so this
+   ratio drives the grid row rather than being stretched by it. */
 .fc__image-block {
   position: relative;
   overflow: hidden;
+  background: #fff;
+  aspect-ratio: 3 / 4;
+  align-self: start;
 }
 
+/* Absolutely positioned so the photo contributes NO intrinsic height to the
+   grid row. Without this, `height: 100%` resolves against an indefinite row
+   height, the img falls back to its natural aspect ratio, and every slide
+   resizes the whole stage (2:3 photos ≈ 116px taller than 3:4 ones). */
 .fc__image-wrap {
-  width: 100%;
-  height: 100%;
+  position: absolute;
+  inset: 0;
   overflow: hidden;
 }
 
@@ -265,6 +278,9 @@
   padding: 2px;
   cursor: pointer;
   transition: border-color var(--transition-fast);
+  /* Keep every swatch the same column width so long colourway names
+     (e.g. "Burgundy & Blue") wrap instead of stretching the row */
+  max-width: 76px;
 }
 
 .fc__variant-btn--active {
@@ -273,6 +289,27 @@
 
 .fc__variant-btn:hover:not(.fc__variant-btn--active) {
   border-color: var(--color-brown-mid);
+}
+
+.fc__variant-thumb-wrap {
+  position: relative;
+  display: block;
+}
+
+/* "New" chip on a single colourway swatch */
+.fc__variant-badge {
+  position: absolute;
+  top: 0;
+  left: 0;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  background-color: var(--color-terracotta);
+  color: var(--color-cream);
+  padding: 2px 5px;
+  line-height: 1.2;
+  pointer-events: none;
 }
 
 .fc__variant-thumb {
