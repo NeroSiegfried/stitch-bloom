@@ -1,5 +1,6 @@
 import { HashRouter, Routes, Route } from 'react-router-dom';
 import { CartProvider } from './context/CartContext';
+import { Analytics } from '@vercel/analytics/react';
 import Navbar        from './components/Navbar/Navbar';
 import CartDrawer    from './components/CartDrawer/CartDrawer';
 import Footer        from './components/Footer/Footer';
@@ -34,6 +35,7 @@ export default function App() {
       <Newsletter />
       <Footer />
       <CookieConsent />
+      <Analytics />
     </HashRouter>
     </CartProvider>
   );

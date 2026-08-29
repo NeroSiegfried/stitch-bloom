@@ -13,6 +13,7 @@
     "deploy": "cp -r dist/. docs/ && git add docs/ && git commit -m 'deploy: update docs' && git push origin main"
   },
   "dependencies": {
+    "@vercel/analytics": "^2.0.1",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "react-icons": "^5.6.0",
