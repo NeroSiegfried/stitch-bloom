@@ -7,6 +7,7 @@ import {
   paymentStatusFromGateway,
   successfulPaymentNeedsCancellationReview,
 } from './orderLifecycle.js';
+import { refundIdentifiers, refundOutcome } from './refundLifecycle.js';
 
 // Vercel environments that must never be able to move real money. A preview is
 // throwaway and shares the production database, so a live key reaching one is a
@@ -102,6 +103,10 @@ export function createRefund(fields) {
   });
 }
 
+export function fetchRefund(refundId) {
+  return paystackRequest(`/refund/${encodeURIComponent(refundId)}`);
+}
+
 export function validWebhookSignature(rawBody, signature) {
   if (!signature) return false;
   const expected = crypto.createHmac('sha512', paystackSecret()).update(rawBody).digest('hex');
@@ -112,6 +117,7 @@ export function validWebhookSignature(rawBody, signature) {
 
 export async function recordVerifiedPayment(payment) {
   const sql = db();
+  const gatewayStatus = String(payment.status || '').toLowerCase();
   const [order] = await sql`
     SELECT orders.id, orders.total, orders.currency, orders.payment_status,
            orders.paystack_reference, orders.payment_mode, payment_attempts.id AS attempt_id,
@@ -135,7 +141,11 @@ export async function recordVerifiedPayment(payment) {
       WHERE id = ${order.attempt_id}
     `;
     await sql`
-      UPDATE orders SET payment_status = 'review', paystack_payload = ${sql.json(payment)}, updated_at = NOW()
+      UPDATE orders SET payment_status = CASE
+          WHEN payment_status IN ('refund_pending', 'refunded') THEN payment_status
+          ELSE 'review'
+        END,
+        paystack_payload = ${sql.json(payment)}, updated_at = NOW()
       WHERE id = ${order.id}
     `;
     throw new HttpError(409, 'The payment details did not match the order total. The order needs review.', {
@@ -143,32 +153,91 @@ export async function recordVerifiedPayment(payment) {
     });
   }
 
-  if (payment.status !== 'success') {
-    const attemptStatus = payment.status || 'failed';
+  if (gatewayStatus !== 'success') {
+    const attemptStatus = gatewayStatus || 'failed';
     const paymentStatus = paymentStatusFromGateway(attemptStatus);
     const localStatus = localStatusAfterGatewayUpdate(attemptStatus, order.attempt_local_status);
     const closesAttempt = localStatus === 'closed';
     const preserveLocallyClosedPending = CLOSED_LOCAL_STATUSES.has(localStatus) && paymentStatus === 'pending';
-    await sql.begin(async (tx) => {
+    const updated = await sql.begin(async (tx) => {
+      const [lockedOrder] = await tx`
+        SELECT id, order_number, status, payment_status, refund_status, total, currency
+        FROM orders WHERE id = ${order.id} FOR UPDATE
+      `;
       await tx`
-        UPDATE payment_attempts SET status = ${attemptStatus}, transaction_id = ${payment.id ? String(payment.id) : null},
+        UPDATE payment_attempts SET status = ${attemptStatus},
+          transaction_id = COALESCE(${payment.id ? String(payment.id) : null}, transaction_id),
           channel = ${payment.channel || null}, gateway_response = ${payment.gateway_response || null},
           local_status = ${localStatus},
           closed_at = CASE WHEN ${closesAttempt} THEN COALESCE(closed_at, NOW()) ELSE closed_at END,
           payload = ${tx.json(payment)}, updated_at = NOW()
         WHERE id = ${order.attempt_id}
       `;
-      await tx`
+
+      if (paymentStatus === 'refunded') {
+        const wasRefunded = lockedOrder.payment_status === 'refunded';
+        const [reversed] = await tx`
+          UPDATE orders SET payment_status = 'refunded', status = 'cancelled',
+            refund_status = COALESCE(refund_status, 'processed'),
+            refunded_at = COALESCE(refunded_at, NOW()),
+            cancelled_at = COALESCE(cancelled_at, NOW()),
+            paystack_payload = ${tx.json(payment)}, updated_at = NOW()
+          WHERE id = ${order.id} AND paystack_reference = ${payment.reference}
+          RETURNING id, order_number, status, payment_status, total, currency, refunded_at
+        `;
+        if (!wasRefunded && reversed && order.payment_mode !== 'test') {
+          await tx`
+            UPDATE products AS product
+            SET stock_quantity = product.stock_quantity + item.quantity, updated_at = NOW()
+            FROM order_items AS item
+            WHERE item.order_id = ${order.id} AND item.product_id = product.id
+              AND product.stock_quantity IS NOT NULL
+          `;
+        }
+        return reversed;
+      }
+
+      if (paymentStatus === 'refund_pending') {
+        const [reversing] = await tx`
+          UPDATE orders SET
+            payment_status = CASE WHEN refund_status = 'failed' THEN payment_status ELSE 'refund_pending' END,
+            status = CASE WHEN refund_status = 'failed' THEN status ELSE 'refund_pending' END,
+            refund_status = CASE
+              WHEN refund_status IN ('processed', 'failed') THEN refund_status
+              ELSE COALESCE(refund_status, 'pending')
+            END,
+            paystack_payload = ${tx.json(payment)}, updated_at = NOW()
+          WHERE id = ${order.id} AND payment_status <> 'refunded'
+            AND paystack_reference = ${payment.reference}
+          RETURNING id, order_number, status, payment_status, total, currency
+        `;
+        return reversing;
+      }
+
+      const [incomplete] = await tx`
         UPDATE orders SET payment_status = CASE
             WHEN ${preserveLocallyClosedPending} THEN payment_status
             ELSE ${paymentStatus}
           END,
-          status = CASE WHEN ${paymentStatus} = 'refunded' THEN 'cancelled' ELSE status END,
           paystack_payload = ${tx.json(payment)}, updated_at = NOW()
-        WHERE id = ${order.id} AND payment_status <> 'paid'
+        WHERE id = ${order.id}
+          AND payment_status NOT IN ('paid', 'refund_pending', 'refunded')
           AND paystack_reference = ${payment.reference}
+        RETURNING id, order_number, status, payment_status, total, currency
       `;
+      return incomplete || lockedOrder;
     });
+
+    if (paymentStatus === 'refunded') {
+      const error = new HttpError(409, 'This payment has been reversed and refunded.', { code: 'PAYMENT_REFUNDED' });
+      error.order = updated;
+      throw error;
+    }
+    if (paymentStatus === 'refund_pending') {
+      throw new HttpError(409, 'This payment is being reversed or refunded by Paystack.', {
+        code: 'PAYMENT_REFUND_PENDING',
+      });
+    }
     throw new HttpError(409, paymentStatus === 'pending' ? 'The payment is still pending.' : 'The payment was not completed.', {
       code: paymentStatus === 'pending' ? 'PAYMENT_PENDING' : 'PAYMENT_NOT_COMPLETED',
     });
@@ -179,7 +248,7 @@ export async function recordVerifiedPayment(payment) {
       SELECT id, order_number, status, payment_status, paystack_reference, total, currency, paid_at
       FROM orders WHERE id = ${order.id} FOR UPDATE
     `;
-    const wasAlreadyPaid = lockedOrder.payment_status === 'paid';
+    const wasAlreadySettled = ['paid', 'refund_pending', 'refunded'].includes(lockedOrder.payment_status);
     const needsCancellationReview = successfulPaymentNeedsCancellationReview(
       lockedOrder.status,
       order.attempt_local_status,
@@ -192,7 +261,14 @@ export async function recordVerifiedPayment(payment) {
         payload = ${tx.json(payment)}, updated_at = NOW()
       WHERE id = ${order.attempt_id}
     `;
-    if (wasAlreadyPaid && lockedOrder.paystack_reference !== payment.reference) {
+    if (['refund_pending', 'refunded'].includes(lockedOrder.payment_status)) {
+      await tx`
+        UPDATE orders SET paystack_payload = ${tx.json(payment)}, updated_at = NOW()
+        WHERE id = ${order.id}
+      `;
+      return lockedOrder;
+    }
+    if (wasAlreadySettled && lockedOrder.paystack_reference !== payment.reference) {
       // Preserve the original settled transaction while retaining this extra
       // successful attempt for the owner to investigate and refund if needed.
       return lockedOrder;
@@ -218,7 +294,7 @@ export async function recordVerifiedPayment(payment) {
     `;
     // A test payment writes its order for inspection but must not touch the
     // stock the live shop is selling from.
-    if (!wasAlreadyPaid && order.payment_mode !== 'test') {
+    if (!wasAlreadySettled && order.payment_mode !== 'test') {
       await tx`
         UPDATE products AS product
         SET stock_quantity = GREATEST(0, product.stock_quantity - item.quantity), updated_at = NOW()
@@ -233,33 +309,71 @@ export async function recordVerifiedPayment(payment) {
 
 export async function recordRefund(refund) {
   const sql = db();
-  const refundId = String(refund.id || '');
-  const transactionId = typeof refund.transaction === 'object'
-    ? String(refund.transaction?.id || '')
-    : String(refund.transaction || '');
+  const { refundId, refundReference, transactionId, transactionReference } = refundIdentifiers(refund);
+  if (![refundId, refundReference, transactionId, transactionReference].some(Boolean)) {
+    throw new HttpError(400, 'The refund did not include a usable identifier.', { code: 'REFUND_IDENTIFIER_MISSING' });
+  }
   const [order] = await sql`
-    SELECT id, payment_status, payment_mode FROM orders
-    WHERE refund_id = ${refundId}
+    SELECT id, total, currency, payment_status, payment_mode FROM orders
+    WHERE (${refundId} <> '' AND refund_id = ${refundId})
+       OR (${refundReference} <> '' AND (
+         refund_id = ${refundReference}
+         OR refund_payload->>'refund_reference' = ${refundReference}
+         OR refund_payload->>'reference' = ${refundReference}
+       ))
        OR (${transactionId} <> '' AND paystack_transaction_id = ${transactionId})
+       OR (${transactionReference} <> '' AND paystack_reference = ${transactionReference})
     LIMIT 1
   `;
-  if (!order) throw new HttpError(404, 'No order matches this refund.');
+  if (!order) throw new HttpError(404, 'No order matches this refund.', { code: 'REFUND_ORDER_NOT_FOUND' });
 
-  const status = refund.status || 'pending';
+  const amountMatches = refund.amount === null || refund.amount === undefined
+    || Number(refund.amount) === Number(order.total) * 100;
+  const currencyMatches = !refund.currency
+    || String(refund.currency).toUpperCase() === String(order.currency).toUpperCase();
+  if (!amountMatches || !currencyMatches) {
+    await sql`
+      UPDATE orders SET refund_status = 'needs-attention', refund_payload = ${sql.json(refund)},
+        payment_status = 'refund_pending', status = 'refund_pending', updated_at = NOW()
+      WHERE id = ${order.id} AND payment_status <> 'refunded'
+    `;
+    throw new HttpError(409, 'The refund amount or currency did not match the order. It needs owner review.', {
+      code: 'REFUND_REVIEW_REQUIRED',
+    });
+  }
+
   return sql.begin(async (tx) => {
     const [locked] = await tx`
-      SELECT payment_status, refund_previous_status FROM orders WHERE id = ${order.id} FOR UPDATE
+      SELECT id, order_number, status, payment_status, refund_status, refund_previous_status
+      FROM orders WHERE id = ${order.id} FOR UPDATE
     `;
     const wasRefunded = locked.payment_status === 'refunded';
-    const isProcessed = status === 'processed';
-    const isFailed = status === 'failed';
+    const outcome = refundOutcome(refund.status, locked.refund_previous_status);
+    const isProcessed = outcome.paymentStatus === 'refunded';
+
+    // Webhooks may arrive out of order. Once processed, a stale pending or
+    // failed event can update diagnostic payload data but may not reopen it.
+    if (wasRefunded && !isProcessed) {
+      const [preserved] = await tx`
+        UPDATE orders SET
+          refund_id = COALESCE(NULLIF(${refundId}, ''), refund_id),
+          refund_payload = ${tx.json(refund)}, updated_at = NOW()
+        WHERE id = ${order.id}
+        RETURNING id, order_number, status, payment_status, refund_status
+      `;
+      return preserved;
+    }
+
     const [updated] = await tx`
-      UPDATE orders SET refund_id = ${refundId || null}, refund_status = ${status},
+      UPDATE orders SET refund_id = COALESCE(NULLIF(${refundId}, ''), refund_id),
+        refund_status = ${outcome.status},
         refund_payload = ${tx.json(refund)},
-        payment_status = ${isProcessed ? 'refunded' : isFailed ? 'paid' : 'refund_pending'},
-        status = ${isProcessed ? 'cancelled' : isFailed ? (locked.refund_previous_status || 'paid') : 'refund_pending'},
-        refunded_at = ${isProcessed ? (refund.refunded_at || new Date().toISOString()) : null},
-        cancelled_at = ${isProcessed ? new Date().toISOString() : null}, updated_at = NOW()
+        payment_status = ${outcome.paymentStatus}, status = ${outcome.orderStatus},
+        refunded_at = CASE WHEN ${isProcessed}
+          THEN COALESCE(refunded_at, ${refund.refunded_at || refund.refundedAt || new Date().toISOString()})
+          ELSE refunded_at END,
+        cancelled_at = CASE WHEN ${isProcessed} THEN COALESCE(cancelled_at, NOW()) ELSE cancelled_at END,
+        updated_at = NOW()
       WHERE id = ${order.id}
       RETURNING id, order_number, status, payment_status, refund_status
     `;

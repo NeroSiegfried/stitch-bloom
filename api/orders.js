@@ -11,7 +11,7 @@ import {
   readJson,
   text,
 } from '../server/http.js';
-import { reconcilePendingPayments } from '../server/paymentReconciliation.js';
+import { reconcilePendingCommerce } from '../server/paymentReconciliation.js';
 import { initializeTransaction, paymentMode, recordVerifiedPayment, verifyTransaction } from '../server/paystack.js';
 
 async function getOwnedOrder(sql, userId, orderId) {
@@ -51,7 +51,7 @@ export default async function handler(req, res) {
       const body = await readJson(req);
       const action = text(body.action, 30);
       if (action === 'reconcile_pending') {
-        const result = await reconcilePendingPayments({ userId: user.id, limit: 5, minAgeMinutes: 1 });
+        const result = await reconcilePendingCommerce({ userId: user.id, limit: 5, minAgeMinutes: 1 });
         return json(res, 200, result);
       }
       const orderId = text(body.id, 80);

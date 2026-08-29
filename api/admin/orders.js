@@ -10,7 +10,7 @@ import {
   text,
 } from '../../server/http.js';
 import { createRefund, recordRefund } from '../../server/paystack.js';
-import { reconcilePendingPayments } from '../../server/paymentReconciliation.js';
+import { reconcilePendingCommerce } from '../../server/paymentReconciliation.js';
 
 const ORDER_STATUSES = ['paid', 'processing', 'dispatched', 'delivered', 'cancelled'];
 const FILTER_STATUSES = new Set([
@@ -82,7 +82,7 @@ export default async function handler(req, res) {
       const body = await readJson(req);
       const action = text(body.action, 30);
       if (action === 'reconcile_pending') {
-        const result = await reconcilePendingPayments({ limit: 8, minAgeMinutes: 1 });
+        const result = await reconcilePendingCommerce({ limit: 8, minAgeMinutes: 1 });
         return json(res, 200, result);
       }
       if (action !== 'refund') throw new HttpError(400, 'Choose a valid order action.');

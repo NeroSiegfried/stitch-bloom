@@ -9,6 +9,8 @@ import {
 test('normalizes Paystack attempt states without losing the raw state', () => {
   assert.equal(paymentStatusFromGateway('ongoing'), 'pending');
   assert.equal(paymentStatusFromGateway('abandoned'), 'failed');
+  assert.equal(paymentStatusFromGateway('reversal-pending'), 'refund_pending');
+  assert.equal(paymentStatusFromGateway('reversal_pending'), 'refund_pending');
   assert.equal(paymentStatusFromGateway('reversed'), 'refunded');
   assert.equal(paymentStatusFromGateway('mystery-state'), 'review');
 });
@@ -17,6 +19,8 @@ test('a pending gateway update cannot reopen a locally closed attempt', () => {
   assert.equal(localStatusAfterGatewayUpdate('ongoing', 'cancelled_by_customer'), 'cancelled_by_customer');
   assert.equal(localStatusAfterGatewayUpdate('pending', 'expired'), 'expired');
   assert.equal(localStatusAfterGatewayUpdate('processing', 'superseded'), 'superseded');
+  assert.equal(localStatusAfterGatewayUpdate('reversal-pending', 'closed'), 'closed');
+  assert.equal(localStatusAfterGatewayUpdate('reversal-pending', 'active'), 'closed');
 });
 
 test('terminal and unknown gateway states close or quarantine an attempt', () => {

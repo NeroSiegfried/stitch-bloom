@@ -22,7 +22,17 @@ export default async function handler(req, res) {
       }
     }
     if (event.event?.startsWith('refund.')) {
-      await recordRefund(event.data);
+      try {
+        await recordRefund(event.data);
+      } catch (error) {
+        // Signed business-data failures are persisted for review (where an
+        // order exists) and acknowledged to avoid a retry storm. Provider,
+        // database, and other infrastructure failures still propagate.
+        if (!['REFUND_REVIEW_REQUIRED', 'REFUND_ORDER_NOT_FOUND', 'REFUND_IDENTIFIER_MISSING'].includes(error.code)) {
+          throw error;
+        }
+        console.error(error);
+      }
     }
     return json(res, 200, { received: true });
   } catch (error) {

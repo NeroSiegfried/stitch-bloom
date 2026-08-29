@@ -15,7 +15,7 @@ export default async function handler(req, res) {
         await recordVerifiedPayment(payment);
         return res.redirect(302, `${origin}/#/payment/callback?reference=${encodeURIComponent(reference)}&status=success`);
       } catch (error) {
-        if (error.code === 'PAYMENT_PENDING') {
+        if (['PAYMENT_PENDING', 'PAYMENT_REFUND_PENDING'].includes(error.code)) {
           return res.redirect(302, `${origin}/#/payment/callback?reference=${encodeURIComponent(reference)}&status=pending`);
         }
         if (error.code === 'PAYMENT_REVIEW_REQUIRED') {
@@ -36,7 +36,7 @@ export default async function handler(req, res) {
       const order = await recordVerifiedPayment(payment);
       return json(res, 200, { status: 'success', order });
     } catch (error) {
-      if (error.code === 'PAYMENT_PENDING') {
+      if (['PAYMENT_PENDING', 'PAYMENT_REFUND_PENDING'].includes(error.code)) {
         return json(res, 202, { status: 'pending', message: error.message });
       }
       throw error;

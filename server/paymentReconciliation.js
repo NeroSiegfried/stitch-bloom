@@ -1,6 +1,12 @@
 import { db } from './db.js';
 import { ACTIVE_GATEWAY_STATUSES } from './orderLifecycle.js';
-import { paymentMode, recordVerifiedPayment, verifyTransaction } from './paystack.js';
+import {
+  fetchRefund,
+  paymentMode,
+  recordRefund,
+  recordVerifiedPayment,
+  verifyTransaction,
+} from './paystack.js';
 
 const DEFAULT_MIN_AGE_MINUTES = 5;
 const DEFAULT_EXPIRE_AFTER_HOURS = 24;
@@ -92,4 +98,80 @@ export async function reconcilePendingPayments({
     expired: summary.expired + Number(result.expired),
     errors: summary.errors + Number(result.error),
   }), { checked: 0, expired: 0, errors: 0 });
+}
+
+/**
+ * Refund webhooks are the fast path, but they are not the only path. Polling
+ * stale refunds makes the local order converge even when a webhook is delayed,
+ * disabled in Paystack, or delivered while the deployment is unavailable.
+ */
+export async function reconcilePendingRefunds({
+  userId = '',
+  limit = 8,
+  minAgeMinutes = DEFAULT_MIN_AGE_MINUTES,
+} = {}) {
+  const sql = db();
+  const mode = paymentMode();
+  const boundedLimit = Math.max(1, Math.min(20, Number.parseInt(limit, 10) || 8));
+  const minimumAge = positiveNumber(minAgeMinutes, DEFAULT_MIN_AGE_MINUTES);
+  const refunds = await sql`
+    SELECT id, order_number, refund_id
+    FROM orders
+    WHERE payment_mode = ${mode}
+      AND payment_status = 'refund_pending'
+      AND refund_id IS NOT NULL AND refund_id <> ''
+      AND updated_at < NOW() - (${minimumAge} * INTERVAL '1 minute')
+      AND (${userId} = '' OR user_id = ${userId})
+    ORDER BY updated_at ASC
+    LIMIT ${boundedLimit}
+  `;
+
+  const results = await Promise.all(refunds.map(async (order) => {
+    try {
+      const refund = await fetchRefund(order.refund_id);
+      const updated = await recordRefund(refund);
+      return {
+        checked: true,
+        completed: updated.payment_status === 'refunded',
+        failed: updated.refund_status === 'failed',
+        needsAttention: updated.refund_status === 'needs-attention',
+        error: false,
+      };
+    } catch (error) {
+      if (error.code === 'REFUND_REVIEW_REQUIRED') {
+        console.error(`Refund reconciliation needs review for ${order.order_number}: ${error.message}`);
+        return { checked: true, completed: false, failed: false, needsAttention: true, error: false };
+      }
+      console.error(`Refund reconciliation failed for ${order.order_number}: ${error.message}`);
+      // Advance the retry clock even on provider errors, preventing account
+      // and dashboard focus events from hammering Paystack during an outage.
+      await sql`UPDATE orders SET updated_at = NOW() WHERE id = ${order.id}`;
+      return { checked: true, completed: false, failed: false, needsAttention: false, error: true };
+    }
+  }));
+
+  return results.reduce((summary, result) => ({
+    checked: summary.checked + 1,
+    completed: summary.completed + Number(result.completed),
+    failed: summary.failed + Number(result.failed),
+    needsAttention: summary.needsAttention + Number(result.needsAttention),
+    errors: summary.errors + Number(result.error),
+  }), { checked: 0, completed: 0, failed: 0, needsAttention: 0, errors: 0 });
+}
+
+export async function reconcilePendingCommerce({
+  userId = '',
+  limit = 8,
+  minAgeMinutes = DEFAULT_MIN_AGE_MINUTES,
+} = {}) {
+  const [payments, refunds] = await Promise.all([
+    reconcilePendingPayments({ userId, limit, minAgeMinutes }),
+    reconcilePendingRefunds({ userId, limit, minAgeMinutes }),
+  ]);
+  return {
+    checked: payments.checked + refunds.checked,
+    errors: payments.errors + refunds.errors,
+    payments,
+    refunds,
+  };
 }
