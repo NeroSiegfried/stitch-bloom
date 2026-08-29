@@ -191,6 +191,14 @@
   min-width: 0;
 }
 
+.cart-item__variant {
+  margin-top: 3px;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
 .cart-item__price {
   font-size: 14px;
   font-weight: 400;
@@ -302,6 +310,18 @@
 .cart-drawer__order-btn {
   width: 100%;
   justify-content: center;
+}
+
+.cart-drawer__email-link {
+  display: block;
+  margin-top: 10px;
+  text-align: center;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .cart-drawer__clear {

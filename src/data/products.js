@@ -60,8 +60,8 @@ export const collections = catalogData.collections.map((col) => ({
 /**
  * Returns a flat list of all products across all collections.
  */
-export function getAllProducts() {
-  return collections.flatMap((col) => col.products);
+export function getAllProducts(source = collections) {
+  return source.flatMap((col) => col.products);
 }
 
 /**
@@ -73,8 +73,8 @@ export function getAllProducts() {
  *   2. badge === "Bestseller" (legacy heuristic).
  *   3. First 3 Najma products.
  */
-export function getBestsellers() {
-  const all      = getAllProducts();
+export function getBestsellers(source = collections) {
+  const all      = getAllProducts(source);
   const selected = all.filter((p) => p.bestseller);
   if (selected.length >= 3) return selected;
   const flagged  = all.filter((p) => p.badge === 'Bestseller');

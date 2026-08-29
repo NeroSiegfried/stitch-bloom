@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { FiShoppingBag, FiMail } from 'react-icons/fi';
 import { useCart } from '../../context/CartContext';
-import { getAllProducts, formatPrice } from '../../data/products';
+import { formatPrice } from '../../data/products';
+import { useCatalog } from '../../context/CatalogContext';
 import { assetUrl } from '../../utils/assetUrl';
 import { SITE_CONFIG } from '../../data/siteConfig';
 import usePageMeta from '../../hooks/usePageMeta';
@@ -36,11 +37,12 @@ function ArrowLeft() {
 export default function ProductDetail() {
   const { id } = useParams();
   const { addItem } = useCart();
+  const { products } = useCatalog();
   const [activeImage, setActiveImage] = useState(0);
   const [activeVariant, setActiveVariant] = useState(0);
   const [added, setAdded] = useState(false);
 
-  const product = getAllProducts().find((p) => p.id === id);
+  const product = products.find((p) => p.id === id);
 
   // Determine display image for OG before conditional return
   const ogImage = product
@@ -95,7 +97,7 @@ export default function ProductDetail() {
   };
 
   const handleAddToBag = () => {
-    addItem(product);
+    addItem(product, product.colorVariants?.[activeVariant]?.label || null);
     setAdded(true);
     setTimeout(() => setAdded(false), 2200);
   };

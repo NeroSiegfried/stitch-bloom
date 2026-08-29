@@ -11,6 +11,9 @@ node_modules
 dist
 dist-ssr
 *.local
+.env
+.env.*
+!.env.example
 
 # Raw photo drops from Drive — source images are renamed into
 # /public/images/products/ and committed from there instead
@@ -27,3 +30,5 @@ drive-download-*.zip
 *.njsproj
 *.sln
 *.sw?
+.vercel
+.env*.local

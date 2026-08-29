@@ -1,0 +1,231 @@
+/* ============================================================
+   Account
+   ============================================================ */
+
+.account-page {
+  min-height: 70vh;
+  background: var(--color-off-white);
+}
+
+.account-access {
+  padding: var(--space-page-top) 0 var(--space-section);
+  background: var(--color-brown-deep);
+}
+
+.account-access__layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(28rem, 0.86fr);
+  gap: var(--space-section);
+  align-items: center;
+}
+
+.account-access__image-wrap {
+  width: min(100%, 36rem);
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  background: var(--color-brown-mid);
+}
+
+.account-access__image-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.account-auth-card {
+  width: min(100%, 34rem);
+  justify-self: end;
+  padding: clamp(1.5rem, 4vw, 3.5rem);
+  border: 1px solid var(--color-brown-mid);
+  background: var(--color-cream-dark);
+}
+
+.account-auth-card__heading {
+  padding-bottom: var(--space-md);
+  margin-bottom: var(--space-md);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.account-auth-card__heading h1 {
+  margin: var(--space-xs) 0;
+  color: var(--color-brown-deep);
+  font-size: clamp(var(--size-2xl), 4vw, var(--size-3xl));
+  font-weight: 300;
+}
+
+.account-auth-card__heading > p:last-child {
+  max-width: 38ch;
+  color: var(--color-text-muted);
+  font-size: var(--size-sm);
+}
+
+.account-auth-form {
+  display: flex;
+  flex-direction: column;
+}
+
+.account-auth-form .commerce-field input {
+  background: var(--color-cream);
+}
+
+.account-auth-form__submit,
+.account-profile-submit {
+  align-self: stretch;
+  margin-top: var(--space-sm);
+}
+
+.account-auth-form__submit .btn-split__label {
+  flex: 1;
+  justify-content: center;
+}
+
+.account-auth-form__submit:disabled,
+.account-profile-submit:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
+.account-auth-form__oauth {
+  display: grid;
+  gap: var(--space-xs);
+  margin-top: var(--space-sm);
+}
+
+.account-auth-form__privacy {
+  margin-top: var(--space-sm);
+  color: var(--color-text-muted);
+  font-size: 11px;
+}
+
+.account-auth-form__switch {
+  padding-top: var(--space-md);
+  margin-top: var(--space-md);
+  border-top: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  font-size: var(--size-sm);
+}
+
+.account-auth-form__switch button {
+  color: var(--color-brown-deep);
+  font-size: inherit;
+  text-decoration: underline;
+  text-decoration-color: var(--color-terracotta);
+  text-underline-offset: 4px;
+}
+
+.account-auth-form__switch button:hover {
+  color: var(--color-terracotta);
+}
+
+/* Signed-in account */
+.account-profile-header {
+  padding: var(--space-page-top) 0 var(--space-lg);
+  background: var(--color-brown-deep);
+}
+
+.account-profile-header__inner {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-lg);
+}
+
+.account-profile-header__eyebrow {
+  margin-bottom: var(--space-sm);
+  color: var(--color-rose-dust);
+  font-size: var(--size-xs);
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.account-profile-header h1 {
+  color: var(--color-white);
+  font-size: clamp(var(--size-2xl), 5vw, var(--size-4xl));
+  font-weight: 300;
+  line-height: 1.08;
+}
+
+.account-profile-header .commerce-head-actions {
+  flex-shrink: 0;
+}
+
+.account-body .commerce-form-heading {
+  justify-content: space-between;
+}
+
+/* Same shape as .checkout-body / .checkout-layout: one section for vertical
+   rhythm, one .container for the gutter, one grid for the columns. The two
+   areas are separated by the grid gap and their own heading rules rather than
+   by a bordered card, so both columns start on the site's container edge. */
+.account-body {
+  padding-block: var(--space-section);
+}
+
+.account-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(22rem, 0.78fr);
+  gap: var(--space-section);
+  align-items: start;
+}
+
+.account-details,
+.account-orders {
+  min-width: 0;
+}
+
+@media (max-width: 840px) {
+  .account-access__layout {
+    grid-template-columns: 1fr;
+  }
+
+  /* The card spans the container so its edges line up with every other
+     section; the measure is held by the inner wrapper instead. */
+  .account-auth-card {
+    order: 1;
+    width: 100%;
+    justify-self: stretch;
+  }
+
+  .account-auth-card__inner {
+    max-width: 34rem;
+    margin-inline: auto;
+  }
+
+  .account-access__image-wrap {
+    order: 2;
+    width: 100%;
+    max-height: 28rem;
+    aspect-ratio: 16 / 10;
+  }
+
+  .account-layout {
+    grid-template-columns: 1fr;
+    gap: var(--space-lg);
+  }
+
+  .account-profile-header__inner {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 520px) {
+  .account-access__layout {
+    gap: var(--space-md);
+  }
+
+  .account-auth-card {
+    padding: var(--space-md) var(--space-sm);
+  }
+
+  .account-profile-submit .btn-split__label {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .account-profile-header .commerce-head-actions {
+    width: 100%;
+    align-items: flex-start;
+  }
+}

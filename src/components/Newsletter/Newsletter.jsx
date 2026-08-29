@@ -38,11 +38,11 @@ export default function Newsletter() {
           }),
         });
       }
-    } catch (_) {
+    } catch {
       /* fail silently — form shows success regardless so the user isn't confused */
     }
 
-    try { localStorage.setItem(STORAGE_KEY, email); } catch (_) { /* private mode */ }
+    try { localStorage.setItem(STORAGE_KEY, email); } catch { /* private mode */ }
 
     setLoading(false);
     setSubmitted(true);

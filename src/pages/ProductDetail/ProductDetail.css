@@ -223,6 +223,7 @@
 
 .pd-info__badge {
   display: inline-flex;
+  align-self: flex-start;
   background-color: var(--color-cream-dark);
   border: 1px solid var(--color-border);
   padding: 6px 12px;
@@ -271,6 +272,16 @@
   flex-direction: column;
   gap: var(--space-xs);
   align-items: flex-start;
+}
+
+.pd-info__actions .btn-split {
+  width: 225px;
+  max-width: 100%;
+}
+
+.pd-info__actions .btn-split__label {
+  flex: 1;
+  justify-content: center;
 }
 
 .pd-info__add-btn--added .btn-split__label {

@@ -169,3 +169,6 @@
   background: var(--color-cream);
   border-color: var(--color-cream);
 }
+
+/* A product with no photograph at all still occupies its card cleanly. */
+.dc__card-image--empty { background: var(--color-cream-dark); }

@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom';
 import { formatPrice } from '../../data/products';
 import './ProductCard.css';
+import SmartImage from '../SmartImage/SmartImage';
+import { primaryFocalPointOf, primaryImageOf } from '../../utils/productImage';
 
 export default function ProductCard({ product, showCollection = false }) {
   const {
@@ -8,23 +10,24 @@ export default function ProductCard({ product, showCollection = false }) {
     name,
     price,
     currency,
-    images,
     badge,
     customizable,
     measurement,
     collectionName,
   } = product;
 
-  const primaryImage = images?.[0] ?? null;
+  const primaryImage = primaryImageOf(product);
 
   return (
     <article className="product-card">
       <Link to={`/shop/${id}`} aria-label={`View ${name}`} tabIndex={-1}>
         <div className="product-card__image-wrap">
           {primaryImage ? (
-            <img
+            <SmartImage
               className="product-card__image"
               src={primaryImage}
+              context="card"
+              focalPoint={primaryFocalPointOf(product)}
               alt={name}
               loading="lazy"
             />

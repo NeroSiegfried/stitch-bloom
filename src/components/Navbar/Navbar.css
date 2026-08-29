@@ -1,5 +1,5 @@
 /* ──────────────────────────────────────────
-   NAVBAR — floating 4-cell bar with 10px margin from all edges
+   NAVBAR — floating 4-cell bar with 16px margin from all edges
    Scraped from mossandstonetemplate.framer.website
    border: 1px solid rgb(93,64,55)  |  bg: rgb(244,241,235)
 ────────────────────────────────────────── */
@@ -47,7 +47,8 @@
 
 /* ── Cell 1: Menu/Close ── */
 .navbar__menu-cell {
-  /* no side borders — navbar outer border is the left edge */
+  flex: 0 0 100px;
+  padding-inline: 0;
   font-family: inherit;
 }
 .navbar__menu-cell--open {
@@ -66,6 +67,7 @@
 /* ── Cell 2: Logo ── */
 .navbar__logo-cell {
   flex: 1;
+  min-width: 0;
   border-left: 1px solid rgb(93, 64, 55);
   text-decoration: none;
 }
@@ -98,15 +100,6 @@
   letter-spacing: -0.06em;
   color: #C4021D;
   
-}
-
-@media (max-width: 480px) {
-  .navbar__logo-img {
-    display: block;
-  }
-  .navbar__logo-text-wrapper {
-    display: none;
-  }
 }
 
 /* ── Cell 3: Search ── */
@@ -182,13 +175,22 @@
   opacity: 1;
   pointer-events: auto;
 }
+/* Columns sized to the widest one and no wider, packed to the left rather
+   than spread across the panel. `width: fit-content` is what equalises them:
+   with 1fr tracks the container resolves to three times the widest column, so
+   each track lands on that same width. `max-width` keeps it inside the panel,
+   and the media queries below drop the column count before that ever bites. */
 .navbar__panel-inner {
-  display: flex;
-  gap: 48px;
-  max-width: var(--max-width);
-  margin-inline: auto;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  justify-content: start;
+  gap: var(--space-lg);
+  width: fit-content;
+  max-width: 100%;
+  margin-inline: 0;
   padding: 2rem var(--container-pad);
 }
+.navbar__panel-section { min-width: 0; }
 .navbar__panel-section {
   display: flex;
   flex-direction: column;
@@ -390,4 +392,77 @@
   font-family: var(--font-heading);
   font-size: var(--size-base);
   color: var(--color-brown-deep);
+}
+
+/* Collapse the column count before the equal-width tracks are forced to
+   squeeze below their content. */
+@media (max-width: 900px) {
+  .navbar__panel-inner { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 600px) {
+  .navbar__panel-inner {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-lg) var(--space-md);
+  }
+}
+@media (max-width: 420px) {
+  .navbar__panel-inner { grid-template-columns: 1fr; gap: var(--space-md); }
+}
+
+@media (max-width: 480px) {
+  .navbar__menu-cell {
+    flex-basis: 88px;
+  }
+
+  .navbar__search-cell,
+  .navbar__cart-cell {
+    width: 44px;
+    flex-basis: 44px;
+  }
+
+  .navbar__logo-cell {
+    padding-inline: 8px;
+    overflow: hidden;
+  }
+
+  .navbar__logo-img {
+    display: block;
+    width: min(100%, 112px);
+    max-height: 30px;
+  }
+
+  .navbar__logo-text-wrapper {
+    display: none;
+  }
+
+  .navbar__cart-count {
+    top: 8px;
+    right: 7px;
+  }
+}
+
+@media (max-width: 350px) {
+  .navbar {
+    left: 8px;
+    right: 8px;
+  }
+
+  .navbar__menu-cell {
+    flex-basis: 80px;
+    gap: 6px;
+  }
+
+  .navbar__menu-label {
+    font-size: 11px;
+  }
+}
+
+/* Sign out sits in the account column as a link, not a button-looking control. */
+.navbar__panel-signout {
+  background: none;
+  border: 0;
+  padding: 0;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
 }

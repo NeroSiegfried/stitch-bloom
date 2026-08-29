@@ -22,30 +22,36 @@ export function CartProvider({ children }) {
     try { localStorage.setItem(CART_KEY, JSON.stringify(items)); } catch { /* private mode */ }
   }, [items]);
 
-  const addItem = useCallback((product) => {
+  const addItem = useCallback((product, variantLabel = null) => {
+    const cartKey = `${product.id}::${variantLabel || ''}`;
     setItems((prev) => {
-      const existing = prev.find((i) => i.id === product.id);
+      const existing = prev.find((i) => (i.cartKey || `${i.id}::`) === cartKey);
       if (existing) {
-        return prev.map((i) => i.id === product.id ? { ...i, qty: i.qty + 1 } : i);
+        return prev.map((i) => (i.cartKey || `${i.id}::`) === cartKey ? { ...i, qty: i.qty + 1 } : i);
       }
-      return [...prev, { ...product, qty: 1 }];
+      return [...prev, { ...product, cartKey, variantLabel, qty: 1 }];
     });
     setIsOpen(true);
   }, []);
 
-  const removeItem = useCallback((id) => {
-    setItems((prev) => prev.filter((i) => i.id !== id));
+  const removeItem = useCallback((cartKey) => {
+    setItems((prev) => prev.filter((i) => (i.cartKey || i.id) !== cartKey));
   }, []);
 
-  const updateQty = useCallback((id, delta) => {
+  const updateQty = useCallback((cartKey, delta) => {
     setItems((prev) =>
       prev
-        .map((i) => i.id === id ? { ...i, qty: i.qty + delta } : i)
+        .map((i) => (i.cartKey || i.id) === cartKey ? { ...i, qty: i.qty + delta } : i)
         .filter((i) => i.qty > 0)
     );
   }, []);
 
-  const clearCart = useCallback(() => setItems([]), []);
+  const clearCart = useCallback(() => {
+    // Persist immediately because checkout navigates away as soon as Paystack
+    // returns an authorization URL; a React effect may not run before that.
+    try { localStorage.setItem(CART_KEY, '[]'); } catch { /* private mode */ }
+    setItems([]);
+  }, []);
 
   const total = items.reduce((sum, i) => sum + (i.price || 0) * i.qty, 0);
   const count = items.reduce((sum, i) => sum + i.qty, 0);

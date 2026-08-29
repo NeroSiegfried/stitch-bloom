@@ -1,21 +1,20 @@
 import { useState, useCallback, useRef, useLayoutEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FiRefreshCw, FiUsers, FiFeather } from 'react-icons/fi';
-import { getBestsellers, getAllProducts } from '../../data/products';
+import { useCatalog } from '../../context/CatalogContext';
 import { assetUrl } from '../../utils/assetUrl';
 import ProductCard from '../../components/ProductCard/ProductCard';
 import DiagonalCarousel from '../../components/DiagonalCarousel/DiagonalCarousel';
+import SmartImage from '../../components/SmartImage/SmartImage';
 import useReveal from '../../hooks/useReveal';
 import usePageMeta from '../../hooks/usePageMeta';
 import '../../styles/buttons.css';
 import './Home.css';
+import { primaryFocalPointOf, primaryImageOf } from '../../utils/productImage';
+import { siteAsset } from '../../utils/siteAssets';
 
-const bestsellers = getBestsellers();
 /* Hero carousel: the bags — the Najma line plus any standalone pieces */
 const BAG_COLLECTIONS = ['najma', 'signature'];
-const carouselItems = getAllProducts()
-  .filter((p) => BAG_COLLECTIONS.includes(p.collectionId))
-  .slice(0, 6);
 
 const CATEGORIES = [
   {
@@ -23,21 +22,21 @@ const CATEGORIES = [
     label: 'Najma Collection',
     sub: 'Crochet bags',
     href: '/shop#najma',
-    image: assetUrl('/images/products/najma-tote-1.jpeg'),
+    slot: 'home-category-najma',
   },
   {
     id: 'gadget-sleeves',
     label: 'Gadget Sleeves',
     sub: 'Tech protection',
     href: '/shop#gadget-sleeves',
-    image: assetUrl('/images/products/sleeve-laptop-1.jpeg'),
+    slot: 'home-category-sleeves',
   },
   {
     id: 'accessories',
     label: 'Accessories',
     sub: 'The details',
     href: '/shop#accessories',
-    image: assetUrl('/images/products/key-holder-1.jpeg'),
+    slot: 'home-category-accessories',
   },
 ];
 
@@ -79,6 +78,23 @@ function ArrowDiag() {
 
 export default function Home() {
   const revealRef = useReveal();
+  const { products, bestsellers, siteAssets, siteSettings } = useCatalog();
+  // An owner-curated selection wins, in the order it was arranged. With none
+  // set, fall back to the original rule so the landing page is never empty.
+  const curated = (siteSettings?.homeCarousel || [])
+    .map((id) => products.find((product) => product.id === id))
+    .filter(Boolean);
+  const carouselItems = (curated.length
+    ? curated
+    : products.filter((product) => BAG_COLLECTIONS.includes(product.collectionId)).slice(0, 6)
+  )
+    // Resolve the tile image up front so a product whose photos live only in a
+    // colourway still shows one in the carousel.
+    .map((product) => ({
+      ...product,
+      images: primaryImageOf(product) ? [primaryImageOf(product)] : [],
+      imageFocalPoints: [primaryFocalPointOf(product)].filter(Boolean),
+    }));
   usePageMeta({
     title: 'Turning Waste Into Worth',
     description: 'Handcrafted crochet bags made from 100% recycled T-shirt yarn. Crafted slowly, designed intentionally.',
@@ -158,14 +174,19 @@ export default function Home() {
       <section className="home-feature" aria-label="Landing feature">
         <div className="home-feature__shell">
           <div className="home-feature__hero">
-            <video
-              className="home-feature__video"
-              autoPlay
-              loop
-              muted
-              playsInline
-              src={assetUrl('/images/hero-video.mp4')}
-            />
+            {/* An unset slot renders nothing at all — the overlay and its
+                backdrop already carry the section, so an empty hero degrades
+                to a clean colour field rather than a broken media element. */}
+            {siteAsset(siteAssets, 'home-hero-video') && (
+              <video
+                className="home-feature__video"
+                autoPlay
+                loop
+                muted
+                playsInline
+                src={assetUrl(siteAsset(siteAssets, 'home-hero-video'))}
+              />
+            )}
             <div className="home-feature__overlay" aria-hidden="true" />
 
             <div className="home-feature__stage" ref={stageRef} style={stageMinH ? { minHeight: stageMinH } : undefined}>
@@ -246,11 +267,11 @@ export default function Home() {
             {CATEGORIES.map((cat) => (
               <Link key={cat.id} to={cat.href} className="home-cat-card reveal">
                 <div className="home-cat-card__clip">
-                  <img
-                    src={cat.image}
+                  <SmartImage
+                    src={siteAsset(siteAssets, cat.slot)}
                     alt={cat.label}
                     className="home-cat-card__image"
-                    onError={(e) => { e.target.style.display = 'none'; }}
+                    context="card"
                   />
                 </div>
                 <div className="home-cat-card__text">
@@ -306,12 +327,14 @@ export default function Home() {
       {/* ── Brand story strip ── */}
       <section className="home-brand-strip" aria-label="About The Stitch Bloom">
         <div className="home-brand-strip__image-side">
-          <img
-            className="home-brand-strip__image"
-            src={assetUrl('/images/brand-story.jpg')}
-            alt="Artisan crocheting a bag from recycled yarn"
-            onError={(e) => { e.currentTarget.style.display = 'none'; }}
-          />
+          {siteAsset(siteAssets, 'home-brand-story') && (
+            <SmartImage
+              className="home-brand-strip__image"
+              src={siteAsset(siteAssets, 'home-brand-story')}
+              context="wide"
+              alt="Artisan crocheting a bag from recycled yarn"
+            />
+          )}
         </div>
 
         <div className="home-brand-strip__text-side reveal">

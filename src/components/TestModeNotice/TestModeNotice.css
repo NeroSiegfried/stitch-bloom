@@ -1,0 +1,21 @@
+.test-mode-notice {
+  margin-bottom: var(--space-md);
+  padding: var(--space-sm) var(--space-md);
+  border: 1px dashed var(--color-terracotta);
+  border-radius: 2px;
+  background: var(--color-cream-dark);
+  font-size: var(--size-xs);
+  line-height: 1.6;
+}
+.test-mode-notice p + p { margin-top: 4px; }
+.test-mode-notice strong {
+  font-weight: 600;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--color-terracotta);
+}
+.test-mode-notice code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  overflow-wrap: anywhere;
+  color: var(--color-brown-mid);
+}

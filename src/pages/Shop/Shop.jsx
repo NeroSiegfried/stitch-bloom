@@ -3,10 +3,12 @@ import { useLocation, Link } from 'react-router-dom';
 import { FiShoppingBag } from 'react-icons/fi';
 import { SITE_CONFIG } from '../../data/siteConfig';
 import { useCart } from '../../context/CartContext';
-import { collections, getAllProducts, formatPrice } from '../../data/products';
+import { formatPrice } from '../../data/products';
+import { useCatalog } from '../../context/CatalogContext';
 import { assetUrl } from '../../utils/assetUrl';
 import useReveal from '../../hooks/useReveal';
 import usePageMeta from '../../hooks/usePageMeta';
+import { countOf } from '../../utils/plural';
 import '../../styles/buttons.css';
 import './Shop.css';
 
@@ -138,7 +140,7 @@ function FeaturedCarousel({ products }) {
           <div className="fc__actions">
             <button
               className="btn-split"
-              onClick={() => addItem(product)}
+              onClick={() => addItem(product, activeVariantData?.label || null)}
             >
               <span className="btn-split__label">Add to Bag</span>
               <span className="btn-split__icon"><FiShoppingBag size={14} /></span>
@@ -244,11 +246,11 @@ function ShopCard({ product }) {
         </Link>
         <p className="sc__price">{formatPrice(product.currency, product.price)}</p>
         {product.colorVariants?.length > 1 && (
-          <p className="sc__variants">{product.colorVariants.length} colourways</p>
+          <p className="sc__variants">{countOf(product.colorVariants.length, 'colourway')}</p>
         )}
         <button
           className="sc__add-btn btn-split"
-          onClick={() => addItem(product)}
+          onClick={() => addItem(product, product.colorVariants?.[0]?.label || null)}
           aria-label={`Add ${product.name} to bag`}
         >
           <span className="btn-split__label">Add to Bag</span>
@@ -264,6 +266,7 @@ export default function Shop() {
   const location = useLocation();
   const [activeFilter, setActiveFilter] = useState(ALL_FILTER);
   const revealRef = useReveal();
+  const { collections, products: allProducts } = useCatalog();
 
   usePageMeta({
     title: 'Shop the Collection',
@@ -280,7 +283,6 @@ export default function Shop() {
     }
   }, [location.hash]);
 
-  const allProducts = getAllProducts();
   const filterOptions = [
     { id: ALL_FILTER, label: 'All' },
     ...collections.map((c) => ({ id: c.id, label: c.name })),
@@ -316,7 +318,7 @@ export default function Shop() {
               <span className="shop-featured__rule" aria-hidden="true" />
             </div>
           </div>
-          <FeaturedCarousel products={featuredProducts} />
+          {featuredProducts.length > 0 && <FeaturedCarousel products={featuredProducts} />}
         </div>
       </section>
 

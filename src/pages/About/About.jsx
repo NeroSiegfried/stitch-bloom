@@ -1,11 +1,14 @@
 import { Link } from 'react-router-dom';
 import { assetUrl } from '../../utils/assetUrl';
+import { useCatalog } from '../../context/CatalogContext';
+import SmartImage from '../../components/SmartImage/SmartImage';
 import { FiPackage, FiScissors, FiHeart } from 'react-icons/fi';
 import useReveal from '../../hooks/useReveal';
 import usePageMeta from '../../hooks/usePageMeta';
 import { SITE_CONFIG } from '../../data/siteConfig';
 import '../../styles/buttons.css';
 import './About.css';
+import { siteAsset } from '../../utils/siteAssets';
 
 /* ── Diagonal arrow (used in btn-split) ── */
 function ArrowDiag() {
@@ -26,6 +29,7 @@ const STATS = [
 ];
 
 export default function About() {
+  const { siteAssets } = useCatalog();
   const revealRef = useReveal();
 
   usePageMeta({
@@ -40,12 +44,14 @@ export default function About() {
       {/* ── Hero ── */}
       <section className="about-hero" aria-label="About hero">
         <div className="about-hero__image-wrap">
-          <img
-            className="about-hero__image"
-            src={assetUrl('/images/about-hero.jpg')}
-            alt="Artisan hands crocheting a bag from recycled T-shirt yarn"
-            onError={(e) => { e.currentTarget.style.opacity = 0; }}
-          />
+          {siteAsset(siteAssets, 'about-hero') && (
+            <SmartImage
+              className="about-hero__image"
+              src={siteAsset(siteAssets, 'about-hero')}
+              context="wide"
+              alt="Artisan hands crocheting a bag from recycled T-shirt yarn"
+            />
+          )}
           <div className="about-hero__overlay" aria-hidden="true" />
         </div>
         <div className="about-hero__content">
@@ -86,12 +92,14 @@ export default function About() {
               </Link>
             </div>
             <div className="about-studio__image-wrap">
-              <img
-                className="about-studio__image"
-                src={assetUrl('/images/about-craft.jpg')}
-                alt="Close-up of crochet work in progress"
-                onError={(e) => { e.currentTarget.style.opacity = 0; }}
-              />
+              {siteAsset(siteAssets, 'about-craft') && (
+                <SmartImage
+                  className="about-studio__image"
+                  src={siteAsset(siteAssets, 'about-craft')}
+                  context="card"
+                  alt="Close-up of crochet work in progress"
+                />
+              )}
             </div>
           </div>
         </div>

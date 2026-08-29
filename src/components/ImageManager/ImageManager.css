@@ -1,0 +1,55 @@
+.image-manager { display: flex; flex-direction: column; gap: var(--space-sm); }
+
+.image-drop {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: var(--space-lg) var(--space-md);
+  border: 1px dashed var(--color-border);
+  background: var(--color-cream);
+  text-align: center;
+  transition: border-color .18s ease, background .18s ease;
+}
+.image-drop svg { width: 22px; height: 22px; color: var(--color-brown-mid); }
+.image-drop p { font-size: var(--size-xs); color: var(--color-text-muted); }
+.image-drop:hover { border-color: var(--color-brown-mid); }
+.image-drop.is-dragover { border-color: var(--color-terracotta); border-style: solid; background: var(--color-cream-dark); }
+.image-drop.is-busy { opacity: .7; }
+
+.image-list { display: flex; flex-direction: column; gap: 0; border: 1px solid var(--color-border); background: var(--color-cream); }
+.image-list__item {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: 8px 10px;
+  transition: background .18s ease;
+}
+.image-list__item + .image-list__item { border-top: 1px solid var(--color-border); }
+.image-list__item:hover { background: var(--color-cream-dark); }
+.image-list__thumb { width: 44px; height: 52px; overflow: hidden; background: var(--color-cream-dark); }
+.image-list__thumb img,
+.image-list__thumb video { width: 100%; height: 100%; object-fit: cover; display: block; }
+.image-list__meta { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.image-list__name { font-size: var(--size-xs); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.image-list__sub { font-size: 10px; letter-spacing: .06em; text-transform: uppercase; color: var(--color-text-muted); }
+.image-list__actions { display: flex; align-items: center; gap: 2px; }
+.image-list__actions button {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  color: var(--color-brown-mid);
+  transition: background .18s ease, color .18s ease;
+}
+.image-list__actions button:hover:not(:disabled) { background: var(--color-brown-deep); color: var(--color-cream); }
+.image-list__actions button:disabled { opacity: .25; cursor: default; }
+.image-list__actions button:focus-visible { outline: 2px solid var(--color-terracotta); outline-offset: -2px; }
+.image-list__remove:hover:not(:disabled) { background: #842d25 !important; }
+.image-manager__empty { display: flex; align-items: center; gap: 7px; font-size: var(--size-xs); color: var(--color-text-muted); }
+
+/* A built-in theme image: framable and replaceable, but not removable — there
+   is no upload behind it to delete. */
+.image-list__item--default { background: color-mix(in srgb, var(--color-cream-dark) 60%, transparent); }
+.image-list__item--default .image-list__sub { color: var(--color-brown-mid); }

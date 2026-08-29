@@ -1,5 +1,7 @@
 import { useEffect } from 'react';
 import { SITE_CONFIG } from '../data/siteConfig';
+import { useCatalog } from '../context/CatalogContext';
+import { siteAsset } from '../utils/siteAssets';
 
 /**
  * usePageMeta
@@ -15,10 +17,17 @@ import { SITE_CONFIG } from '../data/siteConfig';
 export default function usePageMeta({
   title,
   description = SITE_CONFIG.defaultDescription,
-  image = `${SITE_CONFIG.siteUrl}/images/og-default.jpg`,
+  image,
   path,
   type = 'website',
 }) {
+  const { siteAssets } = useCatalog();
+  // The share image is an owner-managed slot; a page that passes its own
+  // (a product photo, say) still wins. Blob URLs are already absolute.
+  const slotImage = siteAsset(siteAssets, 'og-default');
+  const shareImage = image
+    || (slotImage && (/^https?:/i.test(slotImage) ? slotImage : `${SITE_CONFIG.siteUrl}${slotImage}`));
+
   useEffect(() => {
     const fullTitle = `${title} — ${SITE_CONFIG.brandName}`;
     const url = `${SITE_CONFIG.siteUrl}${path ?? window.location.pathname}`;
@@ -54,7 +63,7 @@ export default function usePageMeta({
     setMeta('meta[property="og:title"]',       'property=og:title',       fullTitle);
     setMeta('meta[property="og:description"]', 'property=og:description', description);
     setMeta('meta[property="og:url"]',         'property=og:url',         url);
-    setMeta('meta[property="og:image"]',       'property=og:image',       image);
+    setMeta('meta[property="og:image"]',       'property=og:image',       shareImage);
     setMeta('meta[property="og:type"]',        'property=og:type',        type);
     setMeta('meta[property="og:site_name"]',   'property=og:site_name',   SITE_CONFIG.brandName);
 
@@ -62,6 +71,6 @@ export default function usePageMeta({
     setMeta('meta[name="twitter:card"]',        'name=twitter:card',        'summary_large_image');
     setMeta('meta[name="twitter:title"]',       'name=twitter:title',       fullTitle);
     setMeta('meta[name="twitter:description"]', 'name=twitter:description', description);
-    setMeta('meta[name="twitter:image"]',       'name=twitter:image',       image);
-  }, [title, description, image, path, type]);
+    setMeta('meta[name="twitter:image"]',       'name=twitter:image',       shareImage);
+  }, [title, description, shareImage, path, type]);
 }

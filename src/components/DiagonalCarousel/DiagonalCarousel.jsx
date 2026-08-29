@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useLayoutEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { assetUrl } from '../../utils/assetUrl';
 import './DiagonalCarousel.css';
+import SmartImage from '../SmartImage/SmartImage';
 
 /* M&S-style straight arrow: path M5 12h14M12 5l7 7-7 7, rotated 180deg for prev */
 function NavSvg({ rotate }) {
@@ -31,7 +32,7 @@ function NavSvg({ rotate }) {
  *   compact — hide dots
  *   spread  — use measured container width for responsive sizing
  */
-export default function DiagonalCarousel({ items, compact = false, spread = false, onActiveChange, onLayoutChange }) {
+export default function DiagonalCarousel({ items, compact = false, onActiveChange, onLayoutChange }) {
   const [active, setActive] = useState(0);
   const timerRef = useRef(null);
   const containerRef = useRef(null);
@@ -59,7 +60,7 @@ export default function DiagonalCarousel({ items, compact = false, spread = fals
       });
     }, 4000);
     return () => clearInterval(timerRef.current);
-  }, [items.length]);
+  }, [items.length, onActiveChange]);
 
   const goTo = (idx) => {
     if (idx === active) return;
@@ -107,7 +108,7 @@ export default function DiagonalCarousel({ items, compact = false, spread = fals
        controls bottom. Ensures the overlay set never overlaps the nav buttons. */
     const largeAnchor = Math.max(lowerCardBottom, controlsBottom);
     onLayoutChange({ controlsBottom, lowerCardBottom, largeAnchor, controlsTop, stageH, yStep, cardTop, cardH });
-  }, [cw, cardTop, cardH, yStep, onLayoutChange]);
+  }, [cw, cardTop, cardH, yStep, stageH, onLayoutChange]);
 
   return (
     <div className="dc" ref={containerRef} aria-label="Product carousel" role="region">
@@ -166,22 +167,28 @@ export default function DiagonalCarousel({ items, compact = false, spread = fals
                   aria-label={`View ${item.name}`}
                   tabIndex={0}
                 >
-                  <img
-                    src={item.images?.[0]}
-                    alt={item.name}
-                    className="dc__card-image"
-                    style={{ objectPosition: item.imageFocalPoints?.[0] ?? 'center' }}
-                    onError={(e) => { e.target.src = assetUrl('/images/products/placeholder.svg'); }}
-                  />
+                  {item.images?.[0] ? (
+                    <SmartImage
+                      src={item.images[0]}
+                      alt={item.name}
+                      className="dc__card-image"
+                      context="carousel"
+                      focalPoint={item.imageFocalPoints?.[0]}
+                      onError={(e) => { e.target.src = assetUrl('/images/products/placeholder.svg'); }}
+                    />
+                  ) : <div className="dc__card-image dc__card-image--empty" aria-hidden="true" />}
                 </Link>
               ) : (
-                <img
-                  src={item.images?.[0]}
-                  alt={item.name}
-                  className="dc__card-image"
-                  style={{ objectPosition: item.imageFocalPoints?.[0] ?? 'center' }}
-                  onError={(e) => { e.target.src = assetUrl('/images/products/placeholder.svg'); }}
-                />
+                item.images?.[0] ? (
+                  <SmartImage
+                    src={item.images[0]}
+                    alt={item.name}
+                    className="dc__card-image"
+                    context="carousel"
+                    focalPoint={item.imageFocalPoints?.[0]}
+                    onError={(e) => { e.target.src = assetUrl('/images/products/placeholder.svg'); }}
+                  />
+                ) : <div className="dc__card-image dc__card-image--empty" aria-hidden="true" />
               )}
               {item.badge && <span className="dc__card-badge">{item.badge}</span>}
             </div>

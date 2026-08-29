@@ -2,9 +2,13 @@ import { useState, useEffect, useRef } from 'react';
 import { NavLink, Link, useLocation } from 'react-router-dom';
 import { FiShoppingBag, FiSearch, FiX } from 'react-icons/fi';
 import { useCart } from '../../context/CartContext';
-import { getAllProducts } from '../../data/products';
+import { useCatalog } from '../../context/CatalogContext';
+import { useAuth } from '../../context/AuthContext';
 import { assetUrl } from '../../utils/assetUrl';
+import { countOf } from '../../utils/plural';
 import './Navbar.css';
+import { primaryImageOf } from '../../utils/productImage';
+import { siteAsset } from '../../utils/siteAssets';
 
 const SHOP_LINKS = [
   { label: 'Shop All',         to: '/shop' },
@@ -35,8 +39,9 @@ export default function Navbar() {
   const searchInputRef = useRef(null);
   const location = useLocation();
   const { count, setIsOpen: openCart } = useCart();
+  const { products: allProducts, siteAssets } = useCatalog();
+  const { user, signOut } = useAuth();
 
-  const allProducts = getAllProducts();
   const searchResults = query.trim().length > 1
     ? allProducts.filter((p) =>
         p.name.toLowerCase().includes(query.toLowerCase()) ||
@@ -91,7 +96,7 @@ export default function Navbar() {
         <Link to="/" className="navbar__cell navbar__logo-cell" onClick={close} aria-label="The Stitch Bloom">
           {/* Small screen SVG logo */}
           <img
-            src={assetUrl('/images/Logo.svg')}
+            src={assetUrl(siteAsset(siteAssets, 'brand-logo'))}
             alt="The Stitch Bloom"
             className="navbar__logo-img"
             onError={(e) => {
@@ -118,7 +123,7 @@ export default function Navbar() {
         <button
           className="navbar__cell navbar__cart-cell"
           onClick={() => openCart(true)}
-          aria-label={`Bag${count > 0 ? `, ${count} item${count !== 1 ? 's' : ''}` : ''}`}
+          aria-label={`Bag${count > 0 ? `, ${countOf(count, 'item')}` : ''}`}
         >
           <FiShoppingBag size={18} aria-hidden="true" />
           {count > 0 && (
@@ -181,6 +186,58 @@ export default function Navbar() {
             </ul>
           </div>
 
+          <div className="navbar__panel-section">
+            <p className="navbar__panel-heading">ACCOUNT</p>
+            <ul className="navbar__panel-links" role="list">
+              {/* An owner used to get only the dashboard link here, which left no
+                  route to the sign-out button on the account page. */}
+              {user?.role === 'admin' && (
+                <li>
+                  <NavLink
+                    to="/admin"
+                    className={({ isActive }) =>
+                      `navbar__panel-link navbar__panel-account${isActive ? ' navbar__panel-link--active' : ''}`
+                    }
+                    onClick={close}
+                  >
+                    <span>Owner dashboard</span>
+                    <span className="navbar__panel-underline-wrap" aria-hidden="true">
+                      <span className="navbar__panel-underline" />
+                    </span>
+                  </NavLink>
+                </li>
+              )}
+              <li>
+                <NavLink
+                  to="/account"
+                  className={({ isActive }) =>
+                    `navbar__panel-link navbar__panel-account${isActive ? ' navbar__panel-link--active' : ''}`
+                  }
+                  onClick={close}
+                >
+                  <span>{user ? 'Your account' : 'Sign in or register'}</span>
+                  <span className="navbar__panel-underline-wrap" aria-hidden="true">
+                    <span className="navbar__panel-underline" />
+                  </span>
+                </NavLink>
+              </li>
+              {user && (
+                <li>
+                  <button
+                    type="button"
+                    className="navbar__panel-link navbar__panel-signout"
+                    onClick={() => { close(); signOut(); }}
+                  >
+                    <span>Sign out</span>
+                    <span className="navbar__panel-underline-wrap" aria-hidden="true">
+                      <span className="navbar__panel-underline" />
+                    </span>
+                  </button>
+                </li>
+              )}
+            </ul>
+          </div>
+
         </div>
       </div>
 
@@ -222,7 +279,7 @@ export default function Navbar() {
                         onClick={closeSearch}
                       >
                         <img
-                          src={p.images?.[0]}
+                          src={primaryImageOf(p)}
                           alt={p.name}
                           className="navbar__search-result-img"
                           onError={(e) => { e.target.style.display = 'none'; }}

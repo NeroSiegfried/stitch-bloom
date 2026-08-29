@@ -48,6 +48,7 @@
 
 .newsletter__input {
   flex: 1;
+  min-width: 0;
   font-family: var(--font-body);
   font-size: var(--size-sm);
   color: var(--color-cream);

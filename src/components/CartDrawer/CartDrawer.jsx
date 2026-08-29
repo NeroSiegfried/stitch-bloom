@@ -1,11 +1,19 @@
 import { useCart } from '../../context/CartContext';
+import { useAuth } from '../../context/AuthContext';
 import { formatPrice } from '../../data/products';
+import { deliveryFeeForState, deliveryLabelForZone, deliveryZoneForState } from '../../data/delivery';
 import { assetUrl } from '../../utils/assetUrl';
 import { FiX, FiMinus, FiPlus, FiShoppingBag } from 'react-icons/fi';
+import { Link } from 'react-router-dom';
 import './CartDrawer.css';
 
 export default function CartDrawer() {
   const { items, isOpen, setIsOpen, removeItem, updateQty, total, count, clearCart, buildOrderEmail } = useCart();
+  const { user } = useAuth();
+  const deliveryZone = deliveryZoneForState(user?.state);
+  const savedDelivery = deliveryZone
+    ? { label: deliveryLabelForZone(deliveryZone), fee: deliveryFeeForState(user.state) }
+    : null;
 
   return (
     <>
@@ -65,10 +73,10 @@ export default function CartDrawer() {
               {items.map((item) => {
                 const thumb =
                   item.colorVariants?.length > 0
-                    ? item.colorVariants[0].images[0]
+                    ? (item.colorVariants.find((variant) => variant.label === item.variantLabel) || item.colorVariants[0]).images[0]
                     : item.images?.[0];
                 return (
-                  <li key={item.id} className="cart-item">
+                  <li key={item.cartKey || item.id} className="cart-item">
                     <div className="cart-item__image-wrap">
                       <img
                         src={thumb}
@@ -79,13 +87,16 @@ export default function CartDrawer() {
                     </div>
                     <div className="cart-item__info">
                       <div className="cart-item__name-row">
-                        <p className="cart-item__name">{item.name}</p>
+                        <div>
+                          <p className="cart-item__name">{item.name}</p>
+                          {item.variantLabel && <p className="cart-item__variant">{item.variantLabel}</p>}
+                        </div>
                         <span className="cart-item__price">{formatPrice(item.currency, item.price)}</span>
                       </div>
                       <div className="cart-item__qty-row">
                           <button
                             className="cart-item__qty-btn"
-                            onClick={() => updateQty(item.id, -1)}
+                            onClick={() => updateQty(item.cartKey || item.id, -1)}
                             aria-label="Decrease quantity"
                           >
                             <FiMinus size={14} />
@@ -93,14 +104,14 @@ export default function CartDrawer() {
                           <span className="cart-item__qty">{item.qty}</span>
                           <button
                             className="cart-item__qty-btn"
-                            onClick={() => updateQty(item.id, 1)}
+                            onClick={() => updateQty(item.cartKey || item.id, 1)}
                             aria-label="Increase quantity"
                           >
                             <FiPlus size={14} />
                           </button>
                           <button
                             className="cart-item__qty-btn cart-item__qty-btn--remove"
-                            onClick={() => removeItem(item.id)}
+                            onClick={() => removeItem(item.cartKey || item.id)}
                             aria-label={`Remove ${item.name}`}
                           >
                             <FiX size={14} />
@@ -122,14 +133,19 @@ export default function CartDrawer() {
               <span className="cart-drawer__total-value">{formatPrice('₦', total)}</span>
             </div>
             <p className="cart-drawer__note">
-              Orders are fulfilled via email — we'll confirm availability and payment.
+              {savedDelivery
+                ? `${savedDelivery.label} · ${formatPrice('₦', savedDelivery.fee)}`
+                : 'Delivery: FCT ₦5,500 · Outside FCT ₦14,000.'}
             </p>
-            <a
-              href={buildOrderEmail()}
+            <Link
+              to="/checkout"
               className="btn btn--primary cart-drawer__order-btn"
               onClick={() => setIsOpen(false)}
             >
-              Place Order via Email
+              Secure Checkout
+            </Link>
+            <a href={buildOrderEmail()} className="cart-drawer__email-link" onClick={() => setIsOpen(false)}>
+              Prefer to enquire by email?
             </a>
             <button className="cart-drawer__clear" onClick={clearCart}>
               Clear bag

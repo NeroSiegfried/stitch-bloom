@@ -1,0 +1,188 @@
+.crop-dialog__scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: grid;
+  place-items: center;
+  padding: var(--space-md);
+  background: color-mix(in srgb, var(--color-brown-deep) 62%, transparent);
+  overflow-y: auto;
+}
+.crop-dialog {
+  width: min(1120px, 100%);
+  max-height: 92vh;
+  overflow-y: auto;
+  background: var(--color-cream);
+  border: 1px solid var(--color-border);
+}
+.crop-dialog__head {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-md);
+  padding: var(--space-md);
+  background: var(--color-cream);
+  border-bottom: 1px solid var(--color-border);
+}
+.crop-dialog__head h2 { margin-top: 4px; font-size: var(--size-2xl); font-weight: 300; }
+.crop-dialog__close {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--color-border);
+  color: var(--color-brown-mid);
+  transition: background .18s ease, color .18s ease, border-color .18s ease;
+}
+.crop-dialog__close:hover { background: var(--color-brown-deep); border-color: var(--color-brown-deep); color: var(--color-cream); }
+.crop-dialog__close:focus-visible { outline: 2px solid var(--color-terracotta); outline-offset: 2px; }
+
+.crop-dialog__body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--space-lg);
+  padding: var(--space-md);
+}
+.crop-dialog__stage-col { min-width: 0; }
+
+/* ── The comparison stage: one image, every frame drawn over it ── */
+.crop-stage {
+  position: relative;
+  width: 100%;
+  max-height: 52vh;
+  margin-inline: auto;
+  overflow: hidden;
+  background: var(--color-cream-dark);
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+.crop-stage:active { cursor: grabbing; }
+.crop-stage__image { width: 100%; height: 100%; object-fit: contain; opacity: .55; }
+/* Fixed centre: the reference every frame is measured against. */
+.crop-stage__centre {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(to right, transparent calc(50% - .5px), color-mix(in srgb, var(--color-brown-deep) 45%, transparent) calc(50% - .5px) calc(50% + .5px), transparent calc(50% + .5px)),
+    linear-gradient(to bottom, transparent calc(50% - .5px), color-mix(in srgb, var(--color-brown-deep) 45%, transparent) calc(50% - .5px) calc(50% + .5px), transparent calc(50% + .5px));
+}
+.crop-frame {
+  position: absolute;
+  pointer-events: none;
+  border: 1px dashed color-mix(in srgb, var(--color-brown-deep) 55%, transparent);
+  transition: border-color .18s ease;
+}
+.crop-frame__tag {
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: 1px 5px;
+  background: color-mix(in srgb, var(--color-brown-deep) 70%, transparent);
+  color: var(--color-cream);
+  font-size: 9px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  opacity: 0;
+  transition: opacity .18s ease;
+}
+.crop-frame.is-active {
+  border: 2px solid var(--color-terracotta);
+  box-shadow: 0 0 0 9999px color-mix(in srgb, var(--color-cream) 55%, transparent);
+  clip-path: none;
+}
+.crop-frame.is-active .crop-frame__tag { opacity: 1; background: var(--color-terracotta); }
+.crop-stage__hint { margin-top: var(--space-sm); font-size: var(--size-xs); color: var(--color-text-muted); }
+.crop-stage__hint strong { color: var(--color-terracotta); }
+
+/* ── Controls ── */
+.crop-dialog__controls { display: flex; flex-direction: column; gap: var(--space-md); min-width: 0; }
+.crop-tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.crop-tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 4px;
+  border: 1px solid var(--color-border);
+  background: transparent;
+  font-size: 9px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  transition: border-color .18s ease, color .18s ease, background .18s ease;
+}
+.crop-tab__ratio { width: 26px; background: currentColor; opacity: .35; transition: opacity .18s ease; }
+.crop-tab:hover { border-color: var(--color-brown-mid); color: var(--color-brown-deep); }
+.crop-tab.is-active { border-color: var(--color-terracotta); background: var(--color-cream-dark); color: var(--color-terracotta); }
+.crop-tab.is-active .crop-tab__ratio { opacity: 1; }
+.crop-tab:focus-visible { outline: 2px solid var(--color-terracotta); outline-offset: 2px; }
+
+.crop-slider { display: flex; flex-direction: column; gap: 6px; font-size: 10px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--color-brown-mid); }
+.crop-slider em { font-style: normal; font-weight: 400; letter-spacing: 0; color: var(--color-terracotta); }
+.crop-slider input { width: 100%; accent-color: var(--color-terracotta); }
+.crop-slider-row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-sm); }
+.crop-dialog__quick { display: flex; flex-wrap: wrap; gap: var(--space-sm); }
+.crop-dialog__quick button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--size-xs);
+  color: var(--color-brown-mid);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: color .18s ease;
+}
+.crop-dialog__quick button:hover { color: var(--color-terracotta); }
+
+/* ── Live previews, at their true ratios ── */
+.crop-previews {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-sm);
+  align-items: end;
+  padding: var(--space-md);
+  border-top: 1px solid var(--color-border);
+  background: var(--color-cream-dark);
+}
+/* Fixed height, width derived from each ratio — so the four previews read as
+   one comparison row at a glance, the way a format-comparison card does. */
+.crop-preview__frame {
+  height: 132px;
+  width: auto;
+  max-width: 100%;
+  margin-inline: auto;
+  overflow: hidden;
+  background: var(--color-cream);
+  border: 1px solid var(--color-border);
+}
+.crop-preview__frame img { width: 100%; height: 100%; display: block; }
+.crop-preview figcaption { display: flex; flex-direction: column; gap: 2px; margin-top: 7px; text-align: center; }
+.crop-preview strong { font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--color-brown-deep); }
+.crop-preview span { font-size: 10px; line-height: 1.4; color: var(--color-text-muted); }
+
+.crop-dialog__actions {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-md);
+  background: var(--color-cream);
+  border-top: 1px solid var(--color-border);
+}
+
+@media (max-width: 900px) {
+  .crop-dialog__body { grid-template-columns: 1fr; }
+  .crop-previews { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 520px) {
+  .crop-dialog__scrim { padding: 0; }
+  .crop-dialog { max-height: 100vh; }
+  .crop-tabs { grid-template-columns: repeat(2, 1fr); }
+  .crop-slider-row { grid-template-columns: 1fr; }
+}

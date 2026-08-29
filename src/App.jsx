@@ -1,5 +1,7 @@
 import { HashRouter, Routes, Route } from 'react-router-dom';
 import { CartProvider } from './context/CartContext';
+import { CatalogProvider } from './context/CatalogContext';
+import { AuthProvider } from './context/AuthContext';
 import Navbar        from './components/Navbar/Navbar';
 import CartDrawer    from './components/CartDrawer/CartDrawer';
 import Footer        from './components/Footer/Footer';
@@ -11,11 +13,17 @@ import About         from './pages/About/About';
 import Shop          from './pages/Shop/Shop';
 import Contact       from './pages/Contact/Contact';
 import ProductDetail from './pages/ProductDetail/ProductDetail';
+import Account from './pages/Account/Account';
+import Checkout from './pages/Checkout/Checkout';
+import PaymentCallback from './pages/Checkout/PaymentCallback';
+import Admin from './pages/Admin/Admin';
 import './styles/global.css';
 import './styles/reveal.css';
 
 export default function App() {
   return (
+    <AuthProvider>
+    <CatalogProvider>
     <CartProvider>
     <HashRouter>
       <ScrollToTop />
@@ -28,6 +36,10 @@ export default function App() {
         <Route path="/shop/:id" element={<ProductDetail />} />
         <Route path="/about"    element={<About />}         />
         <Route path="/contact"  element={<Contact />}       />
+        <Route path="/account" element={<Account />} />
+        <Route path="/checkout" element={<Checkout />} />
+        <Route path="/payment/callback" element={<PaymentCallback />} />
+        <Route path="/admin" element={<Admin />} />
         <Route path="*"         element={<Home />}          />
       </Routes>
 
@@ -36,5 +48,7 @@ export default function App() {
       <CookieConsent />
     </HashRouter>
     </CartProvider>
+    </CatalogProvider>
+    </AuthProvider>
   );
 }
