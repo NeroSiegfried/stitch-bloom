@@ -108,7 +108,8 @@ https://thestitchbloom.com/api/auth/apple-callback
 Set the corresponding `GOOGLE_*` or `APPLE_*` server variables. Keep
 `AUTH_OAUTH_UI_ENABLED=false` while provider review, domains, keys, and callback
 registration are incomplete. Setting it to `true` reveals only providers whose
-full server configuration is present; no rebuild is required.
+full server configuration is present. Redeploy after changing Vercel environment
+variables so the new deployment receives them; no client code change is needed.
 
 ## Test and live payments
 
