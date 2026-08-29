@@ -32,3 +32,7 @@ drive-download-*.zip
 *.sw?
 .vercel
 .env*.local
+
+# Order-history dumps written by scripts/reset-orders.js. These contain customer
+# names, phone numbers and delivery addresses and must never be committed.
+backups/

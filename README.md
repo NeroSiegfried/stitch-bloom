@@ -74,14 +74,55 @@ GitHub Pages can still render the old static build, but it cannot safely hold `P
 
    Checkout supplies `https://YOUR-DOMAIN/api/payments/verify?callback=1` per transaction, so the dashboard callback URL is optional.
 
-6. Create a normal account from **Menu → Account → Create account** using the exact address configured as `ADMIN_EMAIL`. There is deliberately no owner control or setup code on the public website. Pull the production environment and assign the role from the trusted server-side script:
+6. Create a normal account from **Menu → Account → Create account** for each address configured in `ADMIN_EMAIL`. There is deliberately no owner control or setup code on the public website. Pull the target environment and assign the role from the trusted server-side script:
 
    ```sh
    vercel env pull .env.local --environment=production
    npm run admin:promote
    ```
 
-   Sign out and back in after promotion. The account link in the menu will then open the owner dashboard. The promotion command also removes owner access from any previous admin account, making an email transfer explicit and safe.
+   Sign out and back in after promotion. The account link in the menu will then open the owner dashboard.
+
+   `ADMIN_EMAIL` accepts a comma-separated list, and it is authoritative for the
+   database it runs against: every listed account is promoted and every admin
+   that is not listed is demoted. That keeps an owner transfer explicit while
+   letting a database carry more than one owner. The script prints the database
+   host it acted on, because production and the sandbox branch have separate
+   owner lists.
+
+## Sandbox branch
+
+Preview and Development deployments run against a separate Neon branch, not the
+live database. This matters because owner access is a row in `users.role`, not an
+environment variable: with one shared database a preview owner would also be a
+live owner, and the admin dashboard reads orders and catalogue without filtering
+by environment.
+
+The branch is a copy-on-write clone, so it starts with the live catalogue,
+customers and settings, and diverges from there. Recreate or refresh it with:
+
+```sh
+neonctl branches create --project-id <project> --name sandbox
+neonctl connection-string sandbox --project-id <project> --pooled
+```
+
+Set that connection string as `DATABASE_URL` on Preview and Development only,
+leaving Production pointed at the primary branch. `payment_mode` on `orders` and
+`payment_attempts` still separates test money from live money within a database;
+the branch is what separates preview *data* from live data.
+
+To clear order history and start from scratch, against whichever database
+`DATABASE_URL` names:
+
+```sh
+npm run orders:reset           # dry run, prints row counts
+npm run orders:reset -- --yes  # writes backups/ then deletes
+```
+
+The delete cascades from `orders` to `order_items` and `payment_attempts`, and
+leaves the catalogue, accounts and site settings untouched. The backup written to
+`backups/` is the only copy afterwards short of a Neon point-in-time restore, and
+it holds customer names, phone numbers and addresses, so it is gitignored.
 
 The checkout uses Paystack's hosted authorization URL, so only `PAYSTACK_SECRET_KEY` is needed at runtime. `VITE_PAYSTACK_PUBLIC_KEY` is safe to expose and the redirect flow does not spend it; the storefront reads its `pk_test_`/`pk_live_` prefix to decide whether to show the test-mode notice.
 
@@ -196,4 +237,9 @@ separately. A verified payment that arrives after local cancellation or expiry
 enters `paid_after_cancel_review` and must be accepted for fulfilment or refunded
 by the owner. Pending attempts are rechecked when order history is loaded and by
 the daily `/api/cron/reconcile-payments` job; active attempts older than
-`PAYMENT_ATTEMPT_TTL_HOURS` (24 by default) become locally expired.
+`PAYMENT_ATTEMPT_TTL_HOURS` (24 by default) become locally expired. Pending
+refunds use the same dashboard, account, and cron reconciliation paths and are
+fetched directly from Paystack, so a delayed or missing refund webhook cannot
+leave an order stuck forever. Refund updates match API and webhook payloads by
+refund ID/reference or transaction ID/reference, and terminal processed states
+cannot be reopened by stale events.

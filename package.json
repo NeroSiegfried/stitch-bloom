@@ -14,6 +14,7 @@
     "preview": "vite preview",
     "db:migrate": "node --env-file-if-exists=.env.local scripts/migrate.js",
     "admin:promote": "node --env-file-if-exists=.env.local scripts/promote-admin.js",
+    "orders:reset": "node --env-file-if-exists=.env.local scripts/reset-orders.js",
     "images:migrate": "node --env-file-if-exists=.env.local scripts/migrate-images.js"
   },
   "dependencies": {
