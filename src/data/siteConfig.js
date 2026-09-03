@@ -22,8 +22,8 @@ export const SITE_CONFIG = {
   founder: 'Whebuma Maigari',
 
   instagram: {
-    handle: 'thestitchbloomltd',
-    url: 'https://instagram.com/thestitchbloomltd',
+    handle: 'thestitchbloom_',
+    url: 'https://instagram.com/thestitchbloom_',
   },
 
   deliveryWindows: {
