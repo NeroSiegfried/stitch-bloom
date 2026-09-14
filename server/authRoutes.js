@@ -31,6 +31,13 @@ function genericResetMessage() {
   return 'If that address belongs to an account, a six-digit code is on its way.';
 }
 
+function emailUnavailable(feature) {
+  return new HttpError(503, `${feature} is temporarily unavailable. Please try again later.`, {
+    expose: true,
+    code: 'AUTH_EMAIL_UNAVAILABLE',
+  });
+}
+
 function waitForMinimum(startedAt, milliseconds = 450) {
   const remaining = milliseconds - (Date.now() - startedAt);
   return remaining > 0 ? new Promise((resolve) => setTimeout(resolve, remaining)) : Promise.resolve();
@@ -76,7 +83,7 @@ async function signin(req, res) {
 
   if (!user.email_verified_at && authEmailConfigured()) {
     if (!(await authEmailReady())) {
-      throw new HttpError(503, 'Email verification is temporarily unavailable. Please try again later.');
+      throw emailUnavailable('Email verification');
     }
     try {
       await issueOtp({ req, email, userId: user.id, purpose: 'email_verification' });
@@ -132,7 +139,7 @@ async function signup(req, res) {
 
   const emailVerification = authEmailConfigured();
   if (emailVerification && !(await authEmailReady())) {
-    throw new HttpError(503, 'Email verification is temporarily unavailable. Please try again later.');
+    throw emailUnavailable('Email verification');
   }
   const [user] = existing
     ? await sql`
@@ -193,7 +200,7 @@ async function verifyEmail(req, res) {
 async function resendVerification(req, res) {
   allowMethods(req, ['POST']);
   assertSameOrigin(req);
-  if (!(await authEmailReady())) throw new HttpError(503, 'Email verification is temporarily unavailable.');
+  if (!(await authEmailReady())) throw emailUnavailable('Email verification');
   const body = await readJson(req);
   const email = ensureEmail(body.email);
   const [user] = await db()`SELECT id, email_verified_at FROM users WHERE email = ${email}`;
@@ -209,7 +216,7 @@ async function forgotPassword(req, res) {
   // Check provider readiness before reading the submitted address. This keeps
   // infrastructure failures visible without turning the response into an
   // account-enumeration signal.
-  if (!(await authEmailReady())) throw new HttpError(503, 'Password recovery is temporarily unavailable. Please try again later.');
+  if (!(await authEmailReady())) throw emailUnavailable('Password recovery');
   const startedAt = Date.now();
   const body = await readJson(req);
   const email = ensureEmail(body.email);
