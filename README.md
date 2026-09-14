@@ -56,9 +56,9 @@ GitHub Pages can still render the old static build, but it cannot safely hold `P
    invoking the reconciliation endpoint.
 
    Account codes and password recovery use Resend. Add `RESEND_API_KEY` and a
-   verified `AUTH_EMAIL_FROM` sender to activate them. Until both are present,
-   sign-up keeps its current password flow and the recovery link stays absent,
-   so an email-provider setup issue cannot lock customers out.
+   verified `AUTH_EMAIL_FROM` sender to activate delivery. Until both are
+   present, sign-up keeps its current password flow and the recovery form
+   clearly reports that email delivery is temporarily unavailable.
 4. Pull the production environment locally and run the migration before opening the shop:
 
    ```sh

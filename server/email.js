@@ -20,7 +20,7 @@ async function sendEmail({ to, subject, text, html, idempotencyKey }) {
   const apiKey = String(process.env.RESEND_API_KEY || '').trim();
   const from = String(process.env.AUTH_EMAIL_FROM || '').trim();
   if (!apiKey || !from) {
-    throw new HttpError(503, 'Email verification is temporarily unavailable.', {
+    throw new HttpError(503, 'Account email is temporarily unavailable.', {
       expose: true,
       code: 'AUTH_EMAIL_NOT_CONFIGURED',
     });
@@ -41,8 +41,8 @@ async function sendEmail({ to, subject, text, html, idempotencyKey }) {
   } catch (error) {
     const timedOut = error.name === 'TimeoutError' || error.name === 'AbortError';
     throw new HttpError(502, timedOut
-      ? 'The verification email took too long to send. Please try again.'
-      : 'The verification email could not be sent. Please try again.', {
+      ? 'The account email took too long to send. Please try again.'
+      : 'The account email could not be sent. Please try again.', {
       expose: true,
       code: timedOut ? 'AUTH_EMAIL_TIMEOUT' : 'AUTH_EMAIL_UNAVAILABLE',
     });
@@ -51,7 +51,7 @@ async function sendEmail({ to, subject, text, html, idempotencyKey }) {
   const payload = await response.json().catch(() => null);
   if (!response.ok || !payload?.id) {
     console.error(`Resend email failed: HTTP ${response.status} — ${payload?.message || 'unknown response'}`);
-    throw new HttpError(502, 'The verification email could not be sent. Please try again.', {
+    throw new HttpError(502, 'The account email could not be sent. Please try again.', {
       expose: true,
       code: 'AUTH_EMAIL_UNAVAILABLE',
     });

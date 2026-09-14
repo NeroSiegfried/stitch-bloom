@@ -181,7 +181,7 @@ function AuthForm({ mode, onModeChange }) {
 
             <p className="account-auth-form__privacy">Your delivery information is used only to fulfil your orders.</p>
             <p className="account-auth-form__switch">
-              {isSignIn && <>{authCapabilities.passwordRecovery && <>Forgot your password? <button type="button" onClick={() => changeMode('forgot')}>Reset it</button>. </>}New to The Stitch Bloom? <button type="button" onClick={() => changeMode('signup')}>Create an account</button></>}
+              {isSignIn && <>Forgot your password? <button type="button" onClick={() => changeMode('forgot')}>Reset it</button>. New to The Stitch Bloom? <button type="button" onClick={() => changeMode('signup')}>Create an account</button></>}
               {isSignUp && <>Already have an account? <button type="button" onClick={() => changeMode('signin')}>Sign in instead</button></>}
               {mode === 'verify' && <>Didn’t receive it? <button type="button" disabled={busy} onClick={resend}>Send another code</button>. Wrong email? <button type="button" onClick={() => changeMode('signup')}>Start again</button></>}
               {['forgot', 'reset'].includes(mode) && <>Remember your password? <button type="button" onClick={() => changeMode('signin')}>Sign in</button></>}

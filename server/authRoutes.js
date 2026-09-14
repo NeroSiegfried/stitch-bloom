@@ -42,9 +42,13 @@ async function me(req, res) {
 
 async function providers(req, res) {
   allowMethods(req, ['GET']);
+  const emailReady = authEmailConfigured();
   return json(res, 200, {
-    emailVerification: authEmailConfigured(),
-    passwordRecovery: authEmailConfigured(),
+    emailVerification: emailReady,
+    // The recovery form is always available. `passwordRecoveryReady` lets the
+    // client distinguish the configured provider without hiding the feature.
+    passwordRecovery: true,
+    passwordRecoveryReady: emailReady,
     oauth: visibleOauthProviders(),
   });
 }
@@ -151,14 +155,21 @@ async function verifyEmail(req, res) {
   assertSameOrigin(req);
   const body = await readJson(req);
   const email = ensureEmail(body.email);
-  await verifyOtp({ email, purpose: 'email_verification', code: body.code });
-  const [user] = await db()`
-    UPDATE users SET email_verified_at = NOW(), updated_at = NOW()
-    WHERE email = ${email}
-    RETURNING id, email, role, first_name, last_name, phone, address_line1,
-              address_line2, city, state, landmark, email_verified_at, session_version
-  `;
-  if (!user) throw new HttpError(400, 'That confirmation code is not valid.');
+  const user = await verifyOtp({
+    email,
+    purpose: 'email_verification',
+    code: body.code,
+    onVerified: async (tx) => {
+      const [verified] = await tx`
+        UPDATE users SET email_verified_at = NOW(), updated_at = NOW()
+        WHERE email = ${email}
+        RETURNING id, email, role, first_name, last_name, phone, address_line1,
+                  address_line2, city, state, landmark, email_verified_at, session_version
+      `;
+      if (!verified) throw new HttpError(400, 'That confirmation code is not valid.');
+      return verified;
+    },
+  });
   await createSession(res, user);
   return json(res, 200, { user: publicUser(user) });
 }
@@ -205,18 +216,27 @@ async function resetPassword(req, res) {
   const email = ensureEmail(body.email);
   if (body.password !== body.confirmPassword) throw new HttpError(400, 'The passwords do not match.');
   const passwordHash = await hashPassword(body.password);
-  await verifyOtp({ email, purpose: 'password_reset', code: body.code });
-  const [user] = await db()`
-    UPDATE users SET password_hash = ${passwordHash}, session_version = session_version + 1,
-      updated_at = NOW()
-    WHERE email = ${email} AND email_verified_at IS NOT NULL
-    RETURNING id
-  `;
-  if (!user) throw new HttpError(400, 'That reset code is not valid.');
-  clearSession(res);
-  sendPasswordChanged({ to: email }).catch((error) => {
-    console.error(`Password-change notice failed: ${error.message}`);
+  await verifyOtp({
+    email,
+    purpose: 'password_reset',
+    code: body.code,
+    onVerified: async (tx) => {
+      const [changed] = await tx`
+        UPDATE users SET password_hash = ${passwordHash}, session_version = session_version + 1,
+          updated_at = NOW()
+        WHERE email = ${email} AND email_verified_at IS NOT NULL
+        RETURNING id
+      `;
+      if (!changed) throw new HttpError(400, 'That reset code is not valid.');
+      return changed;
+    },
   });
+  clearSession(res);
+  try {
+    await sendPasswordChanged({ to: email });
+  } catch (error) {
+    console.error(`Password-change notice failed: ${error.message}`);
+  }
   return json(res, 200, { message: 'Your password has been updated. Sign in with the new password.' });
 }
 

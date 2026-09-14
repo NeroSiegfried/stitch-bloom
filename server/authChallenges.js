@@ -73,38 +73,39 @@ export async function issueOtp({ req, email, userId = null, purpose }) {
   const id = randomUUID();
   const code = String(randomInt(100_000, 1_000_000));
   const codeHash = otpDigest(normalizedEmail, purpose, code);
-  await sql.begin(async (tx) => {
-    await tx`
-      UPDATE auth_challenges SET consumed_at = NOW()
-      WHERE email = ${normalizedEmail} AND purpose = ${purpose} AND consumed_at IS NULL
-    `;
-    await tx`
-      INSERT INTO auth_challenges (
-        id, user_id, email, purpose, code_hash, request_ip_hash, expires_at
-      ) VALUES (
-        ${id}, ${userId}, ${normalizedEmail}, ${purpose}, ${codeHash}, ${fingerprint},
-        NOW() + (${OTP_TTL_MINUTES} * INTERVAL '1 minute')
-      )
-    `;
-  });
+  await sql`
+    INSERT INTO auth_challenges (
+      id, user_id, email, purpose, code_hash, request_ip_hash, expires_at
+    ) VALUES (
+      ${id}, ${userId}, ${normalizedEmail}, ${purpose}, ${codeHash}, ${fingerprint},
+      NOW() + (${OTP_TTL_MINUTES} * INTERVAL '1 minute')
+    )
+  `;
 
   try {
     await sendAuthCode({ to: normalizedEmail, code, purpose, idempotencyKey: `auth-${id}` });
   } catch (error) {
+    // A failed resend must not invalidate the last code that did reach the
+    // customer. Only discard this unsent challenge.
     await sql`DELETE FROM auth_challenges WHERE id = ${id}`;
     throw error;
   }
+  await sql`
+    UPDATE auth_challenges SET consumed_at = NOW()
+    WHERE email = ${normalizedEmail} AND purpose = ${purpose}
+      AND consumed_at IS NULL AND id <> ${id}
+  `;
   return { expiresInMinutes: OTP_TTL_MINUTES };
 }
 
-export async function verifyOtp({ email, purpose, code }) {
+export async function verifyOtp({ email, purpose, code, onVerified }) {
   const normalizedEmail = normalizeEmail(email);
   const suppliedCode = String(code ?? '').trim();
   if (!/^\d{6}$/.test(suppliedCode)) {
     throw new HttpError(400, 'Enter the six-digit code from your email.', { code: 'OTP_INVALID' });
   }
   const sql = db();
-  const outcome = await sql.begin(async (tx) => {
+  const result = await sql.begin(async (tx) => {
     const [challenge] = await tx`
       SELECT id, code_hash, attempts, expires_at
       FROM auth_challenges
@@ -113,10 +114,10 @@ export async function verifyOtp({ email, purpose, code }) {
       LIMIT 1
       FOR UPDATE
     `;
-    if (!challenge) return 'invalid';
+    if (!challenge) return { outcome: 'invalid' };
     if (new Date(challenge.expires_at).getTime() <= Date.now()) {
       await tx`UPDATE auth_challenges SET consumed_at = NOW() WHERE id = ${challenge.id}`;
-      return 'expired';
+      return { outcome: 'expired' };
     }
     const matches = safeEqualHex(challenge.code_hash, otpDigest(normalizedEmail, purpose, suppliedCode));
     if (!matches) {
@@ -126,16 +127,20 @@ export async function verifyOtp({ email, purpose, code }) {
         SET attempts = ${attempts}, consumed_at = CASE WHEN ${attempts} >= ${OTP_MAX_ATTEMPTS} THEN NOW() ELSE NULL END
         WHERE id = ${challenge.id}
       `;
-      return attempts >= OTP_MAX_ATTEMPTS ? 'locked' : 'invalid';
+      return { outcome: attempts >= OTP_MAX_ATTEMPTS ? 'locked' : 'invalid' };
     }
+    // Run the protected account mutation inside this transaction. If it fails,
+    // PostgreSQL rolls back and the valid code remains usable for a retry.
+    const value = onVerified ? await onVerified(tx) : undefined;
     await tx`
       UPDATE auth_challenges SET consumed_at = NOW()
       WHERE email = ${normalizedEmail} AND purpose = ${purpose} AND consumed_at IS NULL
     `;
-    return 'valid';
+    return { outcome: 'valid', value };
   });
 
-  if (outcome === 'expired') throw new HttpError(400, 'That code has expired. Request a new one.', { code: 'OTP_EXPIRED' });
-  if (outcome === 'locked') throw new HttpError(429, 'Too many incorrect attempts. Request a new code.', { code: 'OTP_RATE_LIMITED' });
-  if (outcome !== 'valid') throw new HttpError(400, 'That code is not correct.', { code: 'OTP_INVALID' });
+  if (result.outcome === 'expired') throw new HttpError(400, 'That code has expired. Request a new code.', { code: 'OTP_EXPIRED' });
+  if (result.outcome === 'locked') throw new HttpError(429, 'Too many incorrect attempts. Request a new code.', { code: 'OTP_RATE_LIMITED' });
+  if (result.outcome !== 'valid') throw new HttpError(400, 'That code is not correct.', { code: 'OTP_INVALID' });
+  return result.value;
 }

@@ -23,7 +23,8 @@ export function AuthProvider({ children }) {
   const [isLoading, setIsLoading] = useState(true);
   const [authCapabilities, setAuthCapabilities] = useState({
     emailVerification: false,
-    passwordRecovery: false,
+    passwordRecovery: true,
+    passwordRecoveryReady: false,
     oauth: { google: false, apple: false },
   });
 
