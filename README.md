@@ -56,9 +56,11 @@ GitHub Pages can still render the old static build, but it cannot safely hold `P
    invoking the reconciliation endpoint.
 
    Account codes and password recovery use Resend. Add `RESEND_API_KEY` and a
-   verified `AUTH_EMAIL_FROM` sender to activate delivery. Until both are
-   present, sign-up keeps its current password flow and the recovery form
-   clearly reports that email delivery is temporarily unavailable.
+   verified `AUTH_EMAIL_FROM` sender to activate delivery. Add the DKIM, SPF,
+   and MX records supplied by Resend at the authoritative DNS provider (the
+   provider named by the domain's live nameservers). The server checks those
+   records before accepting code requests, so incomplete DNS setup reports
+   email delivery as temporarily unavailable instead of claiming a code was sent.
 4. Pull the production environment locally and run the migration before opening the shop:
 
    ```sh

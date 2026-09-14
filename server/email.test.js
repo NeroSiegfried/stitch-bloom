@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test, { mock } from 'node:test';
-import { authEmailConfigured, sendAuthCode } from './email.js';
+import { authEmailConfigured, authEmailReady, sendAuthCode } from './email.js';
 
 test('Resend-backed account email requires both the key and sender', async () => {
   const originalKey = process.env.RESEND_API_KEY;
@@ -40,6 +40,63 @@ test('Resend-backed account email requires both the key and sender', async () =>
     assert.match(body.text, /123456/);
   } finally {
     mock.restoreAll();
+    if (originalKey === undefined) delete process.env.RESEND_API_KEY;
+    else process.env.RESEND_API_KEY = originalKey;
+    if (originalFrom === undefined) delete process.env.AUTH_EMAIL_FROM;
+    else process.env.AUTH_EMAIL_FROM = originalFrom;
+  }
+});
+
+test('account email readiness requires Resend DNS records', async () => {
+  const originalKey = process.env.RESEND_API_KEY;
+  const originalFrom = process.env.AUTH_EMAIL_FROM;
+  try {
+    process.env.RESEND_API_KEY = 're_dns_test';
+    process.env.AUTH_EMAIL_FROM = 'The Stitch Bloom <accounts@shop.example>';
+    const lookups = [];
+    const resolver = {
+      async resolveTxt(name) {
+        lookups.push(['TXT', name]);
+        if (name === 'resend._domainkey.shop.example') return [['p=public-key']];
+        if (name === 'send.shop.example') return [['v=spf1 include:amazonses.com ~all']];
+        throw new Error('unexpected TXT lookup');
+      },
+      async resolveMx(name) {
+        lookups.push(['MX', name]);
+        return [{ priority: 10, exchange: 'feedback-smtp.us-east-1.amazonses.com' }];
+      },
+    };
+
+    assert.equal(await authEmailReady({ resolver, bypassCache: true }), true);
+    assert.deepEqual(lookups, [
+      ['TXT', 'resend._domainkey.shop.example'],
+      ['TXT', 'send.shop.example'],
+      ['MX', 'send.shop.example'],
+    ]);
+  } finally {
+    if (originalKey === undefined) delete process.env.RESEND_API_KEY;
+    else process.env.RESEND_API_KEY = originalKey;
+    if (originalFrom === undefined) delete process.env.AUTH_EMAIL_FROM;
+    else process.env.AUTH_EMAIL_FROM = originalFrom;
+  }
+});
+
+test('account email readiness is false when required DNS is missing', async () => {
+  const originalKey = process.env.RESEND_API_KEY;
+  const originalFrom = process.env.AUTH_EMAIL_FROM;
+  try {
+    process.env.RESEND_API_KEY = 're_missing_dns_test';
+    process.env.AUTH_EMAIL_FROM = 'accounts@shop.example';
+    const resolver = {
+      async resolveTxt() {
+        throw new Error('ENOTFOUND');
+      },
+      async resolveMx() {
+        throw new Error('ENOTFOUND');
+      },
+    };
+    assert.equal(await authEmailReady({ resolver, bypassCache: true }), false);
+  } finally {
     if (originalKey === undefined) delete process.env.RESEND_API_KEY;
     else process.env.RESEND_API_KEY = originalKey;
     if (originalFrom === undefined) delete process.env.AUTH_EMAIL_FROM;

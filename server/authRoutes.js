@@ -10,7 +10,7 @@ import {
 } from './auth.js';
 import { issueOtp, normalizeEmail, validEmail, verifyOtp } from './authChallenges.js';
 import { db } from './db.js';
-import { authEmailConfigured, sendPasswordChanged } from './email.js';
+import { authEmailConfigured, authEmailReady, sendPasswordChanged } from './email.js';
 import { allowMethods, appUrl, assertSameOrigin, HttpError, json, readForm, readJson, text } from './http.js';
 import { beginOauth, finishOauth, visibleOauthProviders } from './oauth.js';
 import { paymentMode } from './paystack.js';
@@ -43,7 +43,7 @@ async function me(req, res) {
 
 async function providers(req, res) {
   allowMethods(req, ['GET']);
-  const emailReady = authEmailConfigured();
+  const emailReady = await authEmailReady();
   let gatewayMode = 'unavailable';
   try {
     gatewayMode = paymentMode();
@@ -75,6 +75,9 @@ async function signin(req, res) {
   }
 
   if (!user.email_verified_at && authEmailConfigured()) {
+    if (!(await authEmailReady())) {
+      throw new HttpError(503, 'Email verification is temporarily unavailable. Please try again later.');
+    }
     try {
       await issueOtp({ req, email, userId: user.id, purpose: 'email_verification' });
     } catch (error) {
@@ -128,6 +131,9 @@ async function signup(req, res) {
   if (existing?.email_verified_at) throw new HttpError(409, 'An account already exists for this email address.');
 
   const emailVerification = authEmailConfigured();
+  if (emailVerification && !(await authEmailReady())) {
+    throw new HttpError(503, 'Email verification is temporarily unavailable. Please try again later.');
+  }
   const [user] = existing
     ? await sql`
         UPDATE users SET password_hash = ${passwordHash}, first_name = ${firstName},
@@ -187,7 +193,7 @@ async function verifyEmail(req, res) {
 async function resendVerification(req, res) {
   allowMethods(req, ['POST']);
   assertSameOrigin(req);
-  if (!authEmailConfigured()) throw new HttpError(503, 'Email verification is temporarily unavailable.');
+  if (!(await authEmailReady())) throw new HttpError(503, 'Email verification is temporarily unavailable.');
   const body = await readJson(req);
   const email = ensureEmail(body.email);
   const [user] = await db()`SELECT id, email_verified_at FROM users WHERE email = ${email}`;
@@ -200,7 +206,10 @@ async function resendVerification(req, res) {
 async function forgotPassword(req, res) {
   allowMethods(req, ['POST']);
   assertSameOrigin(req);
-  if (!authEmailConfigured()) throw new HttpError(503, 'Password recovery is temporarily unavailable.');
+  // Check provider readiness before reading the submitted address. This keeps
+  // infrastructure failures visible without turning the response into an
+  // account-enumeration signal.
+  if (!(await authEmailReady())) throw new HttpError(503, 'Password recovery is temporarily unavailable. Please try again later.');
   const startedAt = Date.now();
   const body = await readJson(req);
   const email = ensureEmail(body.email);

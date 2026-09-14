@@ -1,10 +1,66 @@
 import { HttpError } from './http.js';
+import { resolveMx, resolveTxt } from 'node:dns/promises';
 
 const RESEND_ENDPOINT = 'https://api.resend.com/emails';
+const EMAIL_DNS_CACHE_MS = 5 * 60 * 1000;
+const EMAIL_DNS_TIMEOUT_MS = 2_000;
+
+let emailDnsCache;
 
 export function authEmailConfigured() {
   return Boolean(String(process.env.RESEND_API_KEY || '').trim()
     && String(process.env.AUTH_EMAIL_FROM || '').trim());
+}
+
+function senderDomain() {
+  const from = String(process.env.AUTH_EMAIL_FROM || '').trim();
+  const address = from.match(/<([^<>]+)>/)?.[1] || from;
+  const at = address.lastIndexOf('@');
+  return at > 0 ? address.slice(at + 1).trim().toLowerCase() : '';
+}
+
+function withTimeout(promise, milliseconds) {
+  let timer;
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error('DNS lookup timed out')), milliseconds);
+    timer.unref?.();
+  });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+}
+
+async function resendDnsReady(domain, resolver) {
+  try {
+    const [dkim, spf, mx] = await withTimeout(Promise.all([
+      resolver.resolveTxt(`resend._domainkey.${domain}`),
+      resolver.resolveTxt(`send.${domain}`),
+      resolver.resolveMx(`send.${domain}`),
+    ]), EMAIL_DNS_TIMEOUT_MS);
+    const dkimValues = dkim.flat().join(' ');
+    const spfValues = spf.flat().join(' ');
+    return /\bp\s*=\s*[A-Za-z0-9+/=]+/i.test(dkimValues)
+      && /include:amazonses\.com/i.test(spfValues)
+      && mx.some(({ exchange }) => /amazonses\.com\.?$/i.test(exchange));
+  } catch {
+    return false;
+  }
+}
+
+export async function authEmailReady({
+  resolver = { resolveMx, resolveTxt },
+  now = Date.now(),
+  bypassCache = false,
+} = {}) {
+  if (!authEmailConfigured()) return false;
+  const domain = senderDomain();
+  if (!domain) return false;
+  const fingerprint = `${String(process.env.RESEND_API_KEY).trim()}:${domain}`;
+  if (!bypassCache && emailDnsCache?.fingerprint === fingerprint
+      && now - emailDnsCache.checkedAt < EMAIL_DNS_CACHE_MS) {
+    return emailDnsCache.ready;
+  }
+  const ready = await resendDnsReady(domain, resolver);
+  emailDnsCache = { fingerprint, checkedAt: now, ready };
+  return ready;
 }
 
 function escapeHtml(value) {
