@@ -25,6 +25,7 @@ export function AuthProvider({ children }) {
     emailVerification: false,
     passwordRecovery: true,
     passwordRecoveryReady: false,
+    paymentMode: 'unavailable',
     oauth: { google: false, apple: false },
   });
 

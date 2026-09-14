@@ -1,10 +1,11 @@
-import { isTestPayments } from '../../utils/paymentMode';
+import { useAuth } from '../../context/AuthContext';
 import './TestModeNotice.css';
 
 // Renders nothing on the live storefront, so the same build is safe to promote
 // from a preview to production without stripping anything out.
 export default function TestModeNotice({ children }) {
-  if (!isTestPayments) return null;
+  const { authCapabilities } = useAuth();
+  if (authCapabilities.paymentMode !== 'test') return null;
   return (
     <aside className="test-mode-notice">
       <p><strong>Test mode</strong> — this deployment uses Paystack test keys. No real money moves.</p>

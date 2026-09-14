@@ -124,7 +124,9 @@ leaves the catalogue, accounts and site settings untouched. The backup written t
 `backups/` is the only copy afterwards short of a Neon point-in-time restore, and
 it holds customer names, phone numbers and addresses, so it is gitignored.
 
-The checkout uses Paystack's hosted authorization URL, so only `PAYSTACK_SECRET_KEY` is needed at runtime. `VITE_PAYSTACK_PUBLIC_KEY` is safe to expose and the redirect flow does not spend it; the storefront reads its `pk_test_`/`pk_live_` prefix to decide whether to show the test-mode notice.
+The checkout uses Paystack's hosted authorization URL, so only
+`PAYSTACK_SECRET_KEY` is needed. The server derives a non-secret `test`/`live`
+label for the storefront; no Paystack key is included in the browser bundle.
 
 ## Account email and social sign-in
 
@@ -159,7 +161,6 @@ The deployment decides its payment mode from the Paystack key it holds, so promo
 | | Preview / Development | Production |
 | --- | --- | --- |
 | `PAYSTACK_SECRET_KEY` | `sk_test_…` | `sk_live_…` |
-| `VITE_PAYSTACK_PUBLIC_KEY` | `pk_test_…` | `pk_live_…` |
 | `APP_URL` | unset | `https://thestitchbloom.com` |
 | Paystack callback | the preview's own URL | `APP_URL` |
 | Storefront | test-mode notice with the test card | no notice |

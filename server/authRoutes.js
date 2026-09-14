@@ -13,6 +13,7 @@ import { db } from './db.js';
 import { authEmailConfigured, sendPasswordChanged } from './email.js';
 import { allowMethods, appUrl, assertSameOrigin, HttpError, json, readForm, readJson, text } from './http.js';
 import { beginOauth, finishOauth, visibleOauthProviders } from './oauth.js';
+import { paymentMode } from './paystack.js';
 
 const ACCOUNT_FIELDS = `
   id, email, password_hash, role, first_name, last_name, phone,
@@ -43,12 +44,21 @@ async function me(req, res) {
 async function providers(req, res) {
   allowMethods(req, ['GET']);
   const emailReady = authEmailConfigured();
+  let gatewayMode = 'unavailable';
+  try {
+    gatewayMode = paymentMode();
+  } catch (error) {
+    // Authentication must remain available even if checkout has not been
+    // configured. The browser only needs a non-secret mode label here.
+    if (error.status !== 503) throw error;
+  }
   return json(res, 200, {
     emailVerification: emailReady,
     // The recovery form is always available. `passwordRecoveryReady` lets the
     // client distinguish the configured provider without hiding the feature.
     passwordRecovery: true,
     passwordRecoveryReady: emailReady,
+    paymentMode: gatewayMode,
     oauth: visibleOauthProviders(),
   });
 }

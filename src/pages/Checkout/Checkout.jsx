@@ -15,7 +15,6 @@ import {
 } from '../../data/delivery';
 import { assetUrl } from '../../utils/assetUrl';
 import usePageMeta from '../../hooks/usePageMeta';
-import { isTestPayments } from '../../utils/paymentMode';
 import '../Commerce.css';
 import './Checkout.css';
 
@@ -23,7 +22,7 @@ function ArrowDiag() {
   return <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><line x1="2" y1="12" x2="12" y2="2" /><polyline points="4,2 12,2 12,10" /></svg>;
 }
 
-function CheckoutForm({ user, items, subtotal }) {
+function CheckoutForm({ user, items, subtotal, isTestPayments }) {
   const inferredState = canonicalNigeriaState(user.state);
   const { clearCart } = useCart();
   const [shipping, setShipping] = useState({
@@ -110,11 +109,12 @@ function CheckoutForm({ user, items, subtotal }) {
 }
 
 export default function Checkout() {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, authCapabilities } = useAuth();
   const { items, total } = useCart();
+  const isTestPayments = authCapabilities.paymentMode === 'test';
   usePageMeta({ title: 'Secure Checkout', description: 'Complete delivery details and pay securely with Paystack.', path: '/checkout' });
   if (isLoading) return <main className="commerce-page"><p className="commerce-loading">Preparing checkout…</p></main>;
   if (!user) return <Navigate to="/account" state={{ from: '/checkout' }} replace />;
   if (!items.length) return <main className="commerce-page checkout-empty"><FiShoppingBag /><p className="commerce-eyebrow">Your bag is empty</p><h1>Choose something worth carrying.</h1><Link className="btn btn--primary" to="/shop">Return to the collection</Link></main>;
-  return <main className="checkout-page page-enter"><header className="checkout-header"><div className="container"><p className="commerce-eyebrow">Checkout</p><h1>Delivery &amp; payment.</h1></div></header><section className="checkout-body"><CheckoutForm key={user.id} user={user} items={items} subtotal={total} /></section></main>;
+  return <main className="checkout-page page-enter"><header className="checkout-header"><div className="container"><p className="commerce-eyebrow">Checkout</p><h1>Delivery &amp; payment.</h1></div></header><section className="checkout-body"><CheckoutForm key={user.id} user={user} items={items} subtotal={total} isTestPayments={isTestPayments} /></section></main>;
 }
