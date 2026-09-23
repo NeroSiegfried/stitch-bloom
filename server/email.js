@@ -144,12 +144,13 @@ export function sendAuthCode({ to, code, purpose, idempotencyKey }) {
   });
 }
 
-export async function sendPasswordChanged({ to }) {
+export async function sendPasswordChanged({ to, resetUrl }) {
   if (!authEmailConfigured()) return;
+  const safeResetUrl = escapeHtml(resetUrl);
   await sendEmail({
     to,
     subject: 'Your Stitch Bloom password was changed',
-    text: 'Your Stitch Bloom password was changed. If this was not you, contact us immediately.',
-    html: '<div style="font-family:Arial,sans-serif;color:#2f211b;line-height:1.6;max-width:520px;margin:auto"><p style="font-size:12px;letter-spacing:.14em;text-transform:uppercase">The Stitch Bloom</p><h1 style="font-size:26px;font-weight:400">Password changed</h1><p>Your Stitch Bloom password was changed. If this was not you, contact us immediately.</p></div>',
+    text: `Your Stitch Bloom password was changed. If you did not make this change, act now and reset your password immediately:\n\n${resetUrl}`,
+    html: `<div style="font-family:Arial,sans-serif;color:#2f211b;line-height:1.6;max-width:520px;margin:auto"><p style="font-size:12px;letter-spacing:.14em;text-transform:uppercase">The Stitch Bloom</p><h1 style="font-size:26px;font-weight:400">Password changed</h1><p>Your Stitch Bloom password was changed.</p><p><strong>If you did not make this change, act now.</strong> Reset your password immediately to secure your account.</p><p><a href="${safeResetUrl}" style="display:inline-block;padding:13px 20px;background:#2f211b;color:#fff;text-decoration:none">Reset my password</a></p></div>`,
   });
 }

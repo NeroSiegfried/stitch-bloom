@@ -4,8 +4,8 @@ import { sendAuthCode } from './email.js';
 import { HttpError } from './http.js';
 
 export const OTP_TTL_MINUTES = 10;
+export const OTP_MIN_RESEND_SECONDS = 60;
 const OTP_MAX_ATTEMPTS = 5;
-const OTP_MIN_RESEND_SECONDS = 60;
 const OTP_MAX_SENDS_PER_HOUR = 5;
 const PURPOSES = new Set(['email_verification', 'password_reset']);
 
@@ -42,6 +42,7 @@ function safeEqualHex(left, right) {
 }
 
 export async function issueOtp({ req, email, userId = null, purpose }) {
+  const issuedAt = Date.now();
   const normalizedEmail = normalizeEmail(email);
   if (!PURPOSES.has(purpose)) throw new HttpError(500, 'Unknown authentication challenge purpose.');
   const sql = db();
@@ -95,7 +96,10 @@ export async function issueOtp({ req, email, userId = null, purpose }) {
     WHERE email = ${normalizedEmail} AND purpose = ${purpose}
       AND consumed_at IS NULL AND id <> ${id}
   `;
-  return { expiresInMinutes: OTP_TTL_MINUTES };
+  return {
+    expiresAt: new Date(issuedAt + OTP_TTL_MINUTES * 60_000).toISOString(),
+    resendAvailableAt: new Date(issuedAt + OTP_MIN_RESEND_SECONDS * 1_000).toISOString(),
+  };
 }
 
 export async function verifyOtp({ email, purpose, code, onVerified }) {

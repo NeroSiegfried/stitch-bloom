@@ -73,6 +73,10 @@ export function AuthProvider({ children }) {
     method: 'POST', body: JSON.stringify(fields),
   }), []);
 
+  const verifyPasswordResetCode = useCallback((fields) => api('/api/auth/verify-reset-code', {
+    method: 'POST', body: JSON.stringify(fields),
+  }), []);
+
   const resetPassword = useCallback((fields) => api('/api/auth/reset-password', {
     method: 'POST', body: JSON.stringify(fields),
   }), []);
@@ -90,10 +94,10 @@ export function AuthProvider({ children }) {
 
   const value = useMemo(() => ({
     user, isLoading, authCapabilities, signIn, signUp, verifyEmail,
-    resendVerification, requestPasswordReset, resetPassword,
+    resendVerification, requestPasswordReset, verifyPasswordResetCode, resetPassword,
     signOut, updateProfile, refreshUser,
   }), [user, isLoading, authCapabilities, signIn, signUp, verifyEmail,
-    resendVerification, requestPasswordReset, resetPassword,
+    resendVerification, requestPasswordReset, verifyPasswordResetCode, resetPassword,
     signOut, updateProfile, refreshUser]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

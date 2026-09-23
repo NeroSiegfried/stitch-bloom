@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { FiPackage, FiUser } from 'react-icons/fi';
+import { FiEye, FiEyeOff, FiPackage, FiUser } from 'react-icons/fi';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
 import { formatPrice } from '../../data/products';
@@ -26,9 +26,54 @@ function ArrowDiag() {
   );
 }
 
-function SplitArrowButton({ children, busy, className = '' }) {
+const PASSWORD_RECOVERY_STORAGE_KEY = 'sb_password_recovery';
+
+function readPasswordRecovery() {
+  try {
+    return JSON.parse(localStorage.getItem(PASSWORD_RECOVERY_STORAGE_KEY)) || null;
+  } catch {
+    return null;
+  }
+}
+
+function formatCountdown(seconds) {
+  const safe = Math.max(0, seconds);
+  return `${Math.floor(safe / 60)}:${String(safe % 60).padStart(2, '0')}`;
+}
+
+function PasswordField({ label, name, value, onChange, autoComplete }) {
+  const [visible, setVisible] = useState(false);
   return (
-    <button type="submit" className={`btn-split btn-split--primary ${className}`.trim()} disabled={busy}>
+    <label className="commerce-field">
+      {label}
+      <span className="account-password-field">
+        <input
+          type={visible ? 'text' : 'password'}
+          name={name}
+          value={value}
+          onChange={onChange}
+          autoComplete={autoComplete}
+          minLength="8"
+          maxLength="128"
+          required
+        />
+        <button
+          type="button"
+          className="account-password-field__toggle"
+          aria-label={`${visible ? 'Hide' : 'Show'} ${label.toLowerCase()}`}
+          aria-pressed={visible}
+          onClick={() => setVisible((current) => !current)}
+        >
+          {visible ? <FiEyeOff aria-hidden="true" /> : <FiEye aria-hidden="true" />}
+        </button>
+      </span>
+    </label>
+  );
+}
+
+function SplitArrowButton({ children, busy, disabled = false, className = '' }) {
+  return (
+    <button type="submit" className={`btn-split btn-split--primary ${className}`.trim()} disabled={busy || disabled}>
       <span className="btn-split__label">{children}</span>
       <span className="btn-split__icon" aria-hidden="true">
         <span className="btn-split__arrow btn-split__arrow--1"><ArrowDiag /></span>
@@ -47,14 +92,18 @@ function AuthForm({ mode, onModeChange }) {
     verifyEmail,
     resendVerification,
     requestPasswordReset,
+    verifyPasswordResetCode,
     resetPassword,
   } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const oauthResult = new URLSearchParams(location.search).get('auth');
-  const [fields, setFields] = useState({
-    firstName: '', lastName: '', phone: '', email: '', password: '', confirmPassword: '', code: '',
-  });
+  const [recovery, setRecovery] = useState(readPasswordRecovery);
+  const [now, setNow] = useState(0);
+  const [fields, setFields] = useState(() => ({
+    firstName: '', lastName: '', phone: '', email: readPasswordRecovery()?.email || '',
+    password: '', confirmPassword: '', code: '',
+  }));
   const [error, setError] = useState(() => oauthResult === 'oauth-error'
     ? 'Social sign-in could not be completed. Please try again.'
     : '');
@@ -63,6 +112,22 @@ function AuthForm({ mode, onModeChange }) {
     return '';
   });
   const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    if (mode !== 'reset-code') return undefined;
+    setNow(Date.now());
+    const timer = window.setInterval(() => setNow(Date.now()), 1_000);
+    return () => window.clearInterval(timer);
+  }, [mode]);
+
+  const saveRecovery = (next) => {
+    setRecovery(next);
+    localStorage.setItem(PASSWORD_RECOVERY_STORAGE_KEY, JSON.stringify(next));
+  };
+  const clearRecovery = () => {
+    setRecovery(null);
+    localStorage.removeItem(PASSWORD_RECOVERY_STORAGE_KEY);
+  };
 
   const update = (event) => setFields((current) => ({ ...current, [event.target.name]: event.target.value }));
   const changeMode = (nextMode) => {
@@ -95,11 +160,26 @@ function AuthForm({ mode, onModeChange }) {
         finishSignIn(await verifyEmail(fields));
       } else if (mode === 'forgot') {
         const payload = await requestPasswordReset(fields);
+        saveRecovery({
+          email: fields.email,
+          expiresAt: payload.expiresAt,
+          resendAvailableAt: payload.resendAvailableAt,
+          stage: 'code',
+        });
+        setMessage(payload.message);
+        onModeChange('reset-code');
+      } else if (mode === 'reset-code') {
+        const payload = await verifyPasswordResetCode({ email: recovery?.email, code: fields.code });
+        saveRecovery({ ...recovery, expiresAt: payload.expiresAt, stage: 'password' });
         setMessage(payload.message);
         onModeChange('reset');
       } else if (mode === 'reset') {
-        const payload = await resetPassword(fields);
+        const payload = await resetPassword({
+          password: fields.password,
+          confirmPassword: fields.confirmPassword,
+        });
         setFields((current) => ({ ...current, password: '', confirmPassword: '', code: '' }));
+        clearRecovery();
         setMessage(payload.message);
         onModeChange('signin');
       }
@@ -109,7 +189,33 @@ function AuthForm({ mode, onModeChange }) {
         onModeChange('verify');
         return;
       }
+      if (submitError.code === 'PASSWORD_RESET_CONFIRMATION_REQUIRED') {
+        clearRecovery();
+        setError(submitError.message);
+        onModeChange('forgot');
+        return;
+      }
       setError(submitError.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const resendReset = async () => {
+    setBusy(true); setError(''); setMessage('');
+    try {
+      const payload = await requestPasswordReset({ email: recovery?.email });
+      saveRecovery({
+        email: recovery?.email,
+        expiresAt: payload.expiresAt,
+        resendAvailableAt: payload.resendAvailableAt,
+        stage: 'code',
+      });
+      setFields((current) => ({ ...current, code: '' }));
+      setNow(Date.now());
+      setMessage('If that address belongs to an account, a new six-digit code is on its way.');
+    } catch (sendError) {
+      setError(sendError.message);
     } finally {
       setBusy(false);
     }
@@ -134,13 +240,21 @@ function AuthForm({ mode, onModeChange }) {
     signup: ['Create your account.', 'Save your delivery details and keep track of each order.'],
     verify: ['Check your email.', 'Enter the six-digit code we sent to confirm your address.'],
     forgot: ['Reset your password.', 'Enter your email and we’ll send a short confirmation code.'],
-    reset: ['Choose a new password.', 'Enter the code from your email, then choose a new password.'],
+    'reset-code': ['Check your email.', 'Enter the six-digit reset code before it expires.'],
+    reset: ['Choose a new password.', 'Your code is confirmed. Set a new password for your account.'],
   }[mode];
   const submitLabel = {
     signin: 'Sign in', signup: 'Create account', verify: 'Confirm email',
-    forgot: 'Send reset code', reset: 'Update password',
+    forgot: 'Send reset code', 'reset-code': 'Confirm code', reset: 'Update password',
   }[mode];
   const showOauth = authCapabilities.oauth.google || authCapabilities.oauth.apple;
+  const codeSeconds = recovery?.expiresAt
+    && now ? Math.max(0, Math.ceil((new Date(recovery.expiresAt).getTime() - now) / 1_000))
+    : 0;
+  const resendSeconds = recovery?.resendAvailableAt
+    && now ? Math.max(0, Math.ceil((new Date(recovery.resendAvailableAt).getTime() - now) / 1_000))
+    : 0;
+  const codeExpired = mode === 'reset-code' && now > 0 && codeSeconds === 0;
 
   return (
     <section className="account-access" aria-label={copy[0]}>
@@ -162,16 +276,22 @@ function AuthForm({ mode, onModeChange }) {
           <form className="account-auth-form" onSubmit={submit}>
             {isSignUp && <label className="commerce-field">First name<input name="firstName" value={fields.firstName} onChange={update} autoComplete="given-name" required /></label>}
             {isSignUp && <label className="commerce-field">Last name<input name="lastName" value={fields.lastName} onChange={update} autoComplete="family-name" required /></label>}
-            <label className="commerce-field">Email address<input type="email" name="email" value={fields.email} onChange={update} autoComplete="email" required /></label>
-            {['verify', 'reset'].includes(mode) && <label className="commerce-field">Six-digit code<input name="code" value={fields.code} onChange={update} inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength="6" required /></label>}
-            {['signin', 'signup', 'reset'].includes(mode) && <label className="commerce-field">{mode === 'reset' ? 'New password' : 'Password'}<input type="password" name="password" value={fields.password} onChange={update} autoComplete={isSignIn ? 'current-password' : 'new-password'} minLength="8" maxLength="128" required /></label>}
-            {mode === 'reset' && <label className="commerce-field">Confirm new password<input type="password" name="confirmPassword" value={fields.confirmPassword} onChange={update} autoComplete="new-password" minLength="8" maxLength="128" required /></label>}
+            {!['reset-code', 'reset'].includes(mode) && <label className="commerce-field">Email address<input type="email" name="email" value={fields.email} onChange={update} autoComplete="email" required /></label>}
+            {mode === 'reset-code' && <p className="account-recovery-destination">Code sent to <strong>{recovery?.email}</strong></p>}
+            {['verify', 'reset-code'].includes(mode) && <label className="commerce-field">Six-digit code<input name="code" value={fields.code} onChange={update} inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength="6" required /></label>}
+            {['signin', 'signup', 'reset'].includes(mode) && <PasswordField label={mode === 'reset' ? 'New password' : 'Password'} name="password" value={fields.password} onChange={update} autoComplete={isSignIn ? 'current-password' : 'new-password'} />}
+            {mode === 'reset' && <PasswordField label="Confirm new password" name="confirmPassword" value={fields.confirmPassword} onChange={update} autoComplete="new-password" />}
             {isSignUp && <label className="commerce-field">Phone number <span>optional until checkout</span><input name="phone" value={fields.phone} onChange={update} autoComplete="tel" /></label>}
+
+            {mode === 'reset-code' && <div className={`account-reset-timer${codeExpired ? ' account-reset-timer--expired' : ''}`} role="timer" aria-live="polite">
+              <span>{codeExpired ? 'Code expired' : 'Code expires in'}</span>
+              <strong>{now ? formatCountdown(codeSeconds) : '--:--'}</strong>
+            </div>}
 
             {error && <p className="commerce-alert commerce-alert--error" role="alert">{error}</p>}
             {message && <p className="commerce-alert commerce-alert--success" role="status">{message}</p>}
-            <SplitArrowButton busy={busy} className="account-auth-form__submit">
-              {busy ? 'Please wait…' : submitLabel}
+            <SplitArrowButton busy={busy} disabled={codeExpired} className="account-auth-form__submit">
+              {busy ? 'Please wait…' : codeExpired ? 'Code expired' : submitLabel}
             </SplitArrowButton>
 
             {showOauth && <div className="account-auth-form__oauth" aria-label="Other ways to sign in">
@@ -181,10 +301,11 @@ function AuthForm({ mode, onModeChange }) {
 
             <p className="account-auth-form__privacy">Your delivery information is used only to fulfil your orders.</p>
             <p className="account-auth-form__switch">
-              {isSignIn && <>Forgot your password? <button type="button" onClick={() => changeMode('forgot')}>Reset it</button>. New to The Stitch Bloom? <button type="button" onClick={() => changeMode('signup')}>Create an account</button></>}
+              {isSignIn && <>Forgot your password? <button type="button" onClick={() => { clearRecovery(); changeMode('forgot'); }}>Reset it</button>. New to The Stitch Bloom? <button type="button" onClick={() => changeMode('signup')}>Create an account</button></>}
               {isSignUp && <>Already have an account? <button type="button" onClick={() => changeMode('signin')}>Sign in instead</button></>}
               {mode === 'verify' && <>Didn’t receive it? <button type="button" disabled={busy} onClick={resend}>Send another code</button>. Wrong email? <button type="button" onClick={() => changeMode('signup')}>Start again</button></>}
-              {['forgot', 'reset'].includes(mode) && <>Remember your password? <button type="button" onClick={() => changeMode('signin')}>Sign in</button></>}
+              {mode === 'reset-code' && <>Didn’t receive it? <button type="button" disabled={busy || resendSeconds > 0} onClick={resendReset}>{resendSeconds > 0 ? `Resend in ${formatCountdown(resendSeconds)}` : 'Send another code'}</button>. Wrong email? <button type="button" onClick={() => { clearRecovery(); changeMode('forgot'); }}>Start again</button></>}
+              {['forgot', 'reset-code', 'reset'].includes(mode) && <> Remember your password? <button type="button" onClick={() => { clearRecovery(); changeMode('signin'); }}>Sign in</button></>}
             </p>
           </form>
           </div>
@@ -374,7 +495,14 @@ function OrderHistory() {
 
 export default function Account() {
   const { user, isLoading, signOut } = useAuth();
-  const [mode, setMode] = useState('signin');
+  const location = useLocation();
+  const [mode, setMode] = useState(() => {
+    if (new URLSearchParams(location.search).get('mode') === 'forgot') return 'forgot';
+    const recovery = readPasswordRecovery();
+    if (recovery?.stage === 'password') return 'reset';
+    if (recovery?.stage === 'code') return 'reset-code';
+    return 'signin';
+  });
   usePageMeta({ title: 'Your Account', description: 'Manage your Stitch Bloom delivery details and orders.', path: '/account' });
 
   if (isLoading) return <main className="account-page"><p className="commerce-loading">Opening your account…</p></main>;

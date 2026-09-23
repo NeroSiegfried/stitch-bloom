@@ -68,6 +68,74 @@
   background: var(--color-cream);
 }
 
+.account-password-field {
+  position: relative;
+  display: block;
+  color: inherit;
+}
+
+.account-password-field input {
+  padding-right: 3.25rem;
+}
+
+.account-password-field__toggle {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  color: var(--color-brown-mid);
+  transform: translateY(-50%);
+}
+
+.account-password-field__toggle:hover,
+.account-password-field__toggle:focus-visible {
+  color: var(--color-terracotta);
+}
+
+.account-password-field__toggle svg {
+  width: 18px;
+  height: 18px;
+}
+
+.account-recovery-destination {
+  margin-bottom: var(--space-sm);
+  color: var(--color-text-muted);
+  font-size: var(--size-sm);
+  overflow-wrap: anywhere;
+}
+
+.account-recovery-destination strong {
+  color: var(--color-brown-deep);
+  font-weight: 600;
+}
+
+.account-reset-timer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  padding: 12px 14px;
+  margin-bottom: var(--space-xs);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  font-size: var(--size-sm);
+}
+
+.account-reset-timer strong {
+  color: var(--color-brown-deep);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.08em;
+}
+
+.account-reset-timer--expired,
+.account-reset-timer--expired strong {
+  color: #842d25;
+  border-color: #c9978f;
+}
+
 .account-auth-form__submit,
 .account-profile-submit {
   align-self: stretch;
@@ -82,7 +150,11 @@
 .account-auth-form__submit:disabled,
 .account-profile-submit:disabled {
   opacity: 0.55;
-  cursor: wait;
+  cursor: not-allowed;
+}
+
+.account-auth-form__submit:disabled .btn-split__icon {
+  pointer-events: none;
 }
 
 .account-auth-form__oauth {
@@ -115,6 +187,12 @@
 
 .account-auth-form__switch button:hover {
   color: var(--color-terracotta);
+}
+
+.account-auth-form__switch button:disabled {
+  color: var(--color-text-muted);
+  cursor: not-allowed;
+  text-decoration-color: var(--color-border);
 }
 
 /* Signed-in account */

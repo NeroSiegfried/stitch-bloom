@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import { FiShoppingBag } from 'react-icons/fi';
 import { SITE_CONFIG } from '../../data/siteConfig';
@@ -267,6 +267,31 @@ export default function Shop() {
   const [activeFilter, setActiveFilter] = useState(ALL_FILTER);
   const revealRef = useReveal();
   const { collections, products: allProducts } = useCatalog();
+  const filtersRef = useRef(null);
+  const [filtersStuck, setFiltersStuck] = useState(false);
+
+  useEffect(() => {
+    let frame;
+    const measure = () => {
+      const filters = filtersRef.current;
+      const navbar = document.querySelector('.navbar');
+      if (!filters || !navbar) return;
+      const next = filters.getBoundingClientRect().top <= navbar.getBoundingClientRect().bottom + 0.5;
+      setFiltersStuck((current) => current === next ? current : next);
+    };
+    const schedule = () => {
+      window.cancelAnimationFrame(frame);
+      frame = window.requestAnimationFrame(measure);
+    };
+    measure();
+    window.addEventListener('scroll', schedule, { passive: true });
+    window.addEventListener('resize', schedule);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.removeEventListener('scroll', schedule);
+      window.removeEventListener('resize', schedule);
+    };
+  }, []);
 
   usePageMeta({
     title: 'Shop the Collection',
@@ -323,7 +348,7 @@ export default function Shop() {
       </section>
 
       {/* ── Filter tabs ── */}
-      <div className="shop-filters" role="navigation" aria-label="Filter products">
+      <div ref={filtersRef} className={`shop-filters${filtersStuck ? ' shop-filters--stuck' : ''}`} role="navigation" aria-label="Filter products">
         <div className="container">
           <div className="shop-filters__inner" role="tablist">
             {filterOptions.map(({ id, label }) => (

@@ -11,12 +11,22 @@ function response() {
     headers: {},
     status(code) { this.statusCode = code; return this; },
     setHeader(name, value) { this.headers[name.toLowerCase()] = value; return this; },
+    getHeader(name) { return this.headers[name.toLowerCase()]; },
     end(body) { this.body = JSON.parse(body); return this; },
   };
 }
 
-function request(body) {
-  return { method: 'POST', headers: { 'x-forwarded-for': '198.51.100.42' }, body };
+function request(body, cookie = '') {
+  return {
+    method: 'POST',
+    headers: {
+      'x-forwarded-for': '198.51.100.42',
+      'x-forwarded-proto': 'http',
+      host: 'localhost:3000',
+      cookie,
+    },
+    body,
+  };
 }
 
 test('a delivered reset code changes the password once and invalidates the old password', {
@@ -56,20 +66,28 @@ test('a delivered reset code changes the password once and invalidates the old p
 
     const wrongCode = String((Number(code) + 1) % 1_000_000).padStart(6, '0');
     await assert.rejects(
-      AUTH_ROUTES['reset-password'](request({
-        email, code: wrongCode, password: newPassword, confirmPassword: newPassword,
+      AUTH_ROUTES['verify-reset-code'](request({
+        email, code: wrongCode,
       }), response()),
       { status: 400, code: 'OTP_INVALID' },
     );
 
+    const verifyResponse = response();
+    await AUTH_ROUTES['verify-reset-code'](request({ email, code }), verifyResponse);
+    assert.equal(verifyResponse.statusCode, 200);
+    const resetCookie = String(verifyResponse.headers['set-cookie']).split(';')[0];
+    assert.match(resetCookie, /^sb_password_reset=/);
+
     const resetResponse = response();
     await AUTH_ROUTES['reset-password'](request({
-      email, code, password: newPassword, confirmPassword: newPassword,
-    }), resetResponse);
+      password: newPassword, confirmPassword: newPassword,
+    }, resetCookie), resetResponse);
     assert.equal(resetResponse.statusCode, 200);
-    assert.match(resetResponse.headers['set-cookie'], /Max-Age=0/);
+    assert.match(String(resetResponse.headers['set-cookie']), /Max-Age=0/);
     assert.equal(sent.length, 2);
     assert.match(sent[1].subject, /password was changed/i);
+    assert.match(sent[1].text, /reset your password immediately/i);
+    assert.match(sent[1].text, /#\/account\?mode=forgot/);
 
     const [user] = await sql`
       SELECT password_hash, session_version FROM users WHERE id = ${id}
@@ -80,9 +98,9 @@ test('a delivered reset code changes the password once and invalidates the old p
 
     await assert.rejects(
       AUTH_ROUTES['reset-password'](request({
-        email, code, password: newPassword, confirmPassword: newPassword,
-      }), response()),
-      { status: 400, code: 'OTP_INVALID' },
+        password: newPassword, confirmPassword: newPassword,
+      }, resetCookie), response()),
+      { status: 401, code: 'PASSWORD_RESET_CONFIRMATION_REQUIRED' },
     );
 
     const signInResponse = response();

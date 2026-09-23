@@ -4,6 +4,7 @@ import { db } from './db.js';
 import { HttpError } from './http.js';
 
 const COOKIE_NAME = 'sb_session';
+const PASSWORD_RESET_COOKIE_NAME = 'sb_password_reset';
 export const PASSWORD_HASH_ROUNDS = 12;
 
 function secretKey() {
@@ -20,6 +21,13 @@ function parseCookies(header = '') {
     if (index < 0) return ['', ''];
     return [part.slice(0, index).trim(), decodeURIComponent(part.slice(index + 1))];
   }).filter(([key]) => key));
+}
+
+function appendCookie(res, cookie) {
+  const current = res.getHeader?.('Set-Cookie');
+  if (!current) return res.setHeader('Set-Cookie', cookie);
+  const cookies = Array.isArray(current) ? current : [current];
+  return res.setHeader('Set-Cookie', [...cookies, cookie]);
 }
 
 export async function hashPassword(password) {
@@ -71,12 +79,54 @@ export async function createSession(res, user) {
     .setExpirationTime('7d')
     .sign(secretKey());
   const secure = process.env.NODE_ENV === 'production' ? '; Secure' : '';
-  res.setHeader('Set-Cookie', `${COOKIE_NAME}=${encodeURIComponent(token)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=604800${secure}`);
+  appendCookie(res, `${COOKIE_NAME}=${encodeURIComponent(token)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=604800${secure}`);
 }
 
 export function clearSession(res) {
   const secure = process.env.NODE_ENV === 'production' ? '; Secure' : '';
-  res.setHeader('Set-Cookie', `${COOKIE_NAME}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0${secure}`);
+  appendCookie(res, `${COOKIE_NAME}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0${secure}`);
+}
+
+export async function createPasswordResetTicket(res, user) {
+  const token = await new SignJWT({ purpose: 'password_reset', sv: Number(user.session_version || 0) })
+    .setProtectedHeader({ alg: 'HS256' })
+    .setSubject(user.id)
+    .setAudience('password-reset')
+    .setIssuedAt()
+    .setExpirationTime('10m')
+    .sign(secretKey());
+  const secure = process.env.NODE_ENV === 'production' ? '; Secure' : '';
+  appendCookie(res, `${PASSWORD_RESET_COOKIE_NAME}=${encodeURIComponent(token)}; Path=/api/auth; HttpOnly; SameSite=Strict; Max-Age=600${secure}`);
+}
+
+export function clearPasswordResetTicket(res) {
+  const secure = process.env.NODE_ENV === 'production' ? '; Secure' : '';
+  appendCookie(res, `${PASSWORD_RESET_COOKIE_NAME}=; Path=/api/auth; HttpOnly; SameSite=Strict; Max-Age=0${secure}`);
+}
+
+export async function passwordResetUser(req) {
+  const token = parseCookies(req.headers.cookie)[PASSWORD_RESET_COOKIE_NAME];
+  const invalid = () => new HttpError(401, 'Confirm a new reset code before choosing your password.', {
+    code: 'PASSWORD_RESET_CONFIRMATION_REQUIRED',
+  });
+  if (!token) throw invalid();
+  try {
+    const { payload } = await jwtVerify(token, secretKey(), {
+      algorithms: ['HS256'],
+      audience: 'password-reset',
+    });
+    if (payload.purpose !== 'password_reset') throw invalid();
+    const [user] = await db()`
+      SELECT id, email, session_version
+      FROM users
+      WHERE id = ${payload.sub} AND email_verified_at IS NOT NULL
+    `;
+    if (!user || Number(payload.sv || 0) !== Number(user.session_version || 0)) throw invalid();
+    return user;
+  } catch (error) {
+    if (error instanceof HttpError) throw error;
+    throw invalid();
+  }
 }
 
 export async function currentUser(req) {

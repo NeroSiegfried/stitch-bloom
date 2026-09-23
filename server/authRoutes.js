@@ -1,14 +1,24 @@
 import { randomUUID } from 'node:crypto';
 import {
   clearSession,
+  clearPasswordResetTicket,
+  createPasswordResetTicket,
   createSession,
   currentUser,
   hashPassword,
   passwordNeedsRehash,
+  passwordResetUser,
   publicUser,
   verifyPassword,
 } from './auth.js';
-import { issueOtp, normalizeEmail, validEmail, verifyOtp } from './authChallenges.js';
+import {
+  issueOtp,
+  normalizeEmail,
+  OTP_MIN_RESEND_SECONDS,
+  OTP_TTL_MINUTES,
+  validEmail,
+  verifyOtp,
+} from './authChallenges.js';
 import { db } from './db.js';
 import { authEmailConfigured, authEmailReady, sendPasswordChanged } from './email.js';
 import { allowMethods, appUrl, assertSameOrigin, HttpError, json, readForm, readJson, text } from './http.js';
@@ -218,6 +228,10 @@ async function forgotPassword(req, res) {
   // account-enumeration signal.
   if (!(await authEmailReady())) throw emailUnavailable('Password recovery');
   const startedAt = Date.now();
+  const timing = {
+    expiresAt: new Date(startedAt + OTP_TTL_MINUTES * 60_000).toISOString(),
+    resendAvailableAt: new Date(startedAt + OTP_MIN_RESEND_SECONDS * 1_000).toISOString(),
+  };
   const body = await readJson(req);
   const email = ensureEmail(body.email);
   const [user] = await db()`SELECT id, email_verified_at FROM users WHERE email = ${email}`;
@@ -232,34 +246,60 @@ async function forgotPassword(req, res) {
     }
   }
   await waitForMinimum(startedAt);
-  return json(res, 200, { message: genericResetMessage() });
+  return json(res, 200, { message: genericResetMessage(), ...timing });
+}
+
+async function verifyPasswordResetCode(req, res) {
+  allowMethods(req, ['POST']);
+  assertSameOrigin(req);
+  const body = await readJson(req);
+  const email = ensureEmail(body.email);
+  const user = await verifyOtp({
+    email,
+    purpose: 'password_reset',
+    code: body.code,
+    onVerified: async (tx) => {
+      const [verified] = await tx`
+        SELECT id, email, session_version
+        FROM users
+        WHERE email = ${email} AND email_verified_at IS NOT NULL
+        FOR UPDATE
+      `;
+      if (!verified) throw new HttpError(400, 'That reset code is not valid.');
+      return verified;
+    },
+  });
+  await createPasswordResetTicket(res, user);
+  return json(res, 200, {
+    message: 'Code confirmed. Choose your new password.',
+    expiresAt: new Date(Date.now() + OTP_TTL_MINUTES * 60_000).toISOString(),
+  });
 }
 
 async function resetPassword(req, res) {
   allowMethods(req, ['POST']);
   assertSameOrigin(req);
   const body = await readJson(req);
-  const email = ensureEmail(body.email);
+  const user = await passwordResetUser(req);
   if (body.password !== body.confirmPassword) throw new HttpError(400, 'The passwords do not match.');
   const passwordHash = await hashPassword(body.password);
-  await verifyOtp({
-    email,
-    purpose: 'password_reset',
-    code: body.code,
-    onVerified: async (tx) => {
-      const [changed] = await tx`
-        UPDATE users SET password_hash = ${passwordHash}, session_version = session_version + 1,
-          updated_at = NOW()
-        WHERE email = ${email} AND email_verified_at IS NOT NULL
-        RETURNING id
-      `;
-      if (!changed) throw new HttpError(400, 'That reset code is not valid.');
-      return changed;
-    },
+  const [changed] = await db()`
+    UPDATE users SET password_hash = ${passwordHash}, session_version = session_version + 1,
+      updated_at = NOW()
+    WHERE id = ${user.id} AND session_version = ${user.session_version}
+      AND email_verified_at IS NOT NULL
+    RETURNING id
+  `;
+  if (!changed) throw new HttpError(401, 'Confirm a new reset code before choosing your password.', {
+    code: 'PASSWORD_RESET_CONFIRMATION_REQUIRED',
   });
   clearSession(res);
+  clearPasswordResetTicket(res);
   try {
-    await sendPasswordChanged({ to: email });
+    await sendPasswordChanged({
+      to: user.email,
+      resetUrl: `${appUrl(req)}/#/account?mode=forgot`,
+    });
   } catch (error) {
     console.error(`Password-change notice failed: ${error.message}`);
   }
@@ -299,6 +339,7 @@ export const AUTH_ROUTES = {
   'verify-email': verifyEmail,
   'resend-verification': resendVerification,
   'forgot-password': forgotPassword,
+  'verify-reset-code': verifyPasswordResetCode,
   'reset-password': resetPassword,
   google: beginGoogle,
   apple: beginApple,
