@@ -37,9 +37,12 @@ async function resendDnsReady(domain, resolver) {
     ]), EMAIL_DNS_TIMEOUT_MS);
     const dkimValues = dkim.flat().join(' ');
     const spfValues = spf.flat().join(' ');
+    // Resend can publish either its older Amazon SES records or its current
+    // managed sending records. Validate the records themselves instead of
+    // coupling account email availability to one Resend delivery backend.
     return /\bp\s*=\s*[A-Za-z0-9+/=]+/i.test(dkimValues)
-      && /include:amazonses\.com/i.test(spfValues)
-      && mx.some(({ exchange }) => /amazonses\.com\.?$/i.test(exchange));
+      && /\bv=spf1\b/i.test(spfValues)
+      && mx.some(({ exchange }) => String(exchange || '').trim());
   } catch {
     return false;
   }

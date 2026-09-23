@@ -81,6 +81,35 @@ test('account email readiness requires Resend DNS records', async () => {
   }
 });
 
+test('account email readiness accepts Resend managed sending records', async () => {
+  const originalKey = process.env.RESEND_API_KEY;
+  const originalFrom = process.env.AUTH_EMAIL_FROM;
+  try {
+    process.env.RESEND_API_KEY = 're_managed_dns_test';
+    process.env.AUTH_EMAIL_FROM = 'The Stitch Bloom <accounts@shop.example>';
+    const resolver = {
+      async resolveTxt(name) {
+        if (name === 'resend._domainkey.shop.example') return [['p=public-key']];
+        if (name === 'send.shop.example') {
+          return [['v=spf1 ip4:192.0.2.10 ip4:192.0.2.11 ~all']];
+        }
+        throw new Error('unexpected TXT lookup');
+      },
+      async resolveMx(name) {
+        assert.equal(name, 'send.shop.example');
+        return [{ priority: 10, exchange: 'feedback.forge.rmta.net' }];
+      },
+    };
+
+    assert.equal(await authEmailReady({ resolver, bypassCache: true }), true);
+  } finally {
+    if (originalKey === undefined) delete process.env.RESEND_API_KEY;
+    else process.env.RESEND_API_KEY = originalKey;
+    if (originalFrom === undefined) delete process.env.AUTH_EMAIL_FROM;
+    else process.env.AUTH_EMAIL_FROM = originalFrom;
+  }
+});
+
 test('account email readiness is false when required DNS is missing', async () => {
   const originalKey = process.env.RESEND_API_KEY;
   const originalFrom = process.env.AUTH_EMAIL_FROM;
